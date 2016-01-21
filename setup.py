@@ -22,7 +22,7 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""Invenio module that adds more fun to the platform."""
+"""Invenio module that implements OAI-PMH server."""
 
 import os
 import sys
@@ -61,6 +61,8 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.2',
+    'lxml>=3.5.0',
+    'marshmallow>=2.5.0',
 ]
 
 packages = find_packages()
@@ -128,7 +130,7 @@ setup(
         ],
         'invenio_db.models': [
             'invenio_oaiserver = invenio_oaiserver.models',
-        ],},
+        ], },
     extras_require=extras_require,
     install_requires=install_requires,
     setup_requires=setup_requires,

@@ -1,16 +1,31 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of Flask-OAIServer
-# Copyright (C) 2015 CERN.
+# This file is part of Invenio.
+# Copyright (C) 2015, 2016 CERN.
 #
-# Flask-OAIServer is free software; you can redistribute it and/or
-# modify it under the terms of the Revised BSD License; see LICENSE
-# file for more details.
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 """Sets helper functions."""
 
-from flask import current_app as app
-from invenio_oaiserver.models import Set, SetRecord
+from flask import current_app
+from .models import Set, SetRecord
 
 
 def get_sets_list(starting_position=0, max_length=None):
@@ -23,7 +38,7 @@ def get_sets_list(starting_position=0, max_length=None):
     return sets
 
     # TODO: in batabase implementation this should not get all elements
-    #return SETS[starting_position:starting_position+max_length]
+    # return SETS[starting_position:starting_position+max_length]
 
 
 def get_sets_count():
@@ -33,9 +48,9 @@ def get_sets_count():
 def get_oai_records(set_spec=None, from_date=None, until_date=None):
     setrecs = SetRecord.query.distinct(SetRecord.recid)
     if set_spec:
-        setrecs = setrecs.filter(SetRecord.set_spec==set_spec)
+        setrecs = setrecs.filter(SetRecord.set_spec == set_spec)
     if from_date:
-        setrecs = setrecs.filter(SetRecord.create_date>=from_date)
+        setrecs = setrecs.filter(SetRecord.create_date >= from_date)
     if until_date:
-        setrecs = setrecs.filter(SetRecord.create_date<=until_date)
+        setrecs = setrecs.filter(SetRecord.create_date <= until_date)
     return setrecs

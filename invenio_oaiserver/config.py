@@ -1,12 +1,50 @@
-OAISERVER_ADMIN_EMAIL = "someone@example.com"
-OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME = 1  # time in hours
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2015, 2016 CERN.
+#
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+
+"""Define default configuration values."""
+
+OAISERVER_PAGE_SIZE = 10
+
+# The version of the OAI-PMH supported by the repository.
+OAISERVER_PROTOCOL_VERSION = '2.0'
+
+OAISERVER_ADMIN_EMAILS = [
+    'info@invenio-software.org',
+]
+
+OAISERVER_COMPRESSIONS = [
+    'identity',
+]
+
+OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME = 60 * 60  # time in seconds
+
 OAISERVER_SETS_MAX_LENGTH = 3
 
 OAISERVER_METADATA_FORMATS = {
-    "oai_dc": {
-        "dojosn_file": "local/path",
-        "schemaURL": "http://www.openarchives.org/OAI/2.0/oai_dc.xsd",
-        "namespaceURL": "http://www.openarchives.org/OAI/2.0/oai_dc/",
-        "template": "local/path"
+    'oai_dc': {
+        'serializer': 'dojson.contrib.to_marc21.utils:dumps',
+        'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
+        'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
     }
 }

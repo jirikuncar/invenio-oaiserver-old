@@ -22,11 +22,35 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""Invenio module that implements OAI-PMH server."""
+"""Define forms for manipulation of OAI sets."""
 
-from __future__ import absolute_import, print_function
+from flask_babelex import gettext as _
+from flask_wtf import Form
+from invenio_db import db
+from wtforms.ext.sqlalchemy.fields import QuerySelectField
+from wtforms_alchemy import model_form_factory
 
-from .ext import InvenioOAIServer
-from .version import __version__
+from .models import OAISet
 
-__all__ = ('__version__', 'InvenioOAIServer')
+ModelForm = model_form_factory(Form)
+
+
+class OAISetForm(ModelForm):
+    """Form for creating and updating an OAISet."""
+
+    @classmethod
+    def get_session(self):
+        return db.session
+
+    class Meta:
+        model = OAISet
+
+    parent = QuerySelectField(
+        query_factory=OAISet.query.all,
+        get_pk=lambda a: a.spec,
+        get_label=lambda a: a.name,
+        allow_blank=True,
+        blank_text=_('No parent set.'),
+    )
+
+__all__ = ('OAISetForm', )

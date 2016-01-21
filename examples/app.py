@@ -36,14 +36,32 @@ Run example development server:
 from __future__ import absolute_import, print_function
 
 from flask import Flask
-from flask_babelex import Babel
+from flask_cli import FlaskCLI
+from invenio_assets import InvenioAssets
+from invenio_db import InvenioDB
+from invenio_records import InvenioRecords
 
 from invenio_oaiserver import InvenioOAIServer
 
 # Create Flask application
 app = Flask(__name__)
-Babel(app)
+FlaskCLI(app)
+InvenioAssets(app)
+InvenioDB(app)
+InvenioRecords(app)
 InvenioOAIServer(app)
 
-if __name__ == "__main__":
-    app.run()
+
+@app.cli.group()
+def fixtures():
+    """Initialize example data."""
+
+
+@fixtures.command()
+def oaiserver():
+    """Initialize OAI-PMH server."""
+    from invenio_db import db
+    from invenio_oaiserver.models import OAISet
+
+    db.session.add(OAISet(spec='test', name='Test'))
+    db.session.commit()

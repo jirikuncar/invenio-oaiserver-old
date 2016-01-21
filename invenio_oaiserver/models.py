@@ -1,47 +1,66 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of Flask-OAIServer
-# Copyright (C) 2015 CERN.
+# This file is part of Invenio.
+# Copyright (C) 2015, 2016 CERN.
 #
-# Flask-OAuth2Server is free software; you can redistribute it and/or
-# modify it under the terms of the Revised BSD License; see LICENSE
-# file for more details.
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-from sqlalchemy import ForeignKey, func
+"""Models for storing information about OAIServer state."""
+
+from flask_babelex import lazy_gettext as _
 from invenio_db import db
+from sqlalchemy import ForeignKey, func
 from sqlalchemy_utils import Timestamp
 
-class Set(db.Model, Timestamp):
-    """
-    """
 
-    __tablename__ = 'oaiset'
+class OAISet(db.Model, Timestamp):
+    """Information about OAI set."""
+
+    __tablename__ = 'oaiserver_set'
 
     spec = db.Column(
         db.String(40),
         primary_key=True,
         info=dict(
-            label='Name',
-            description='Name of set.'
+            label=_('Identifier'),
+            description=_('Identifier of the set.'),
         )
     )
+    """Set identifier."""
 
     name = db.Column(
         db.String(40),
         info=dict(
-            label='Long name',
-            description='Long name of set.'
+            label=_('Long name'),
+            description=_('Long name of the set.'),
         )
     )
     """Human readable name of the set."""
 
     description = db.Column(
-        db.Text(),
-        default=u'',
+        db.Text,
+        nullable=True,
         info=dict(
-            label='Description',
-            description='Optional. Description of the set',
-        )
+            label=_('Description'),
+            description=_('Description of the set.'),
+        ),
     )
     """Human readable description."""
 
@@ -49,90 +68,32 @@ class Set(db.Model, Timestamp):
         db.Text(),
         default=u'',
         info=dict(
-            label='Search pattern',
-            description='Search pattern to select records',
+            label=_('Search pattern'),
+            description=_('Search pattern to select records'),
         )
     )
     """Search pattern to get records."""
 
-    # collection = db.Column(
-    #     db.Integer(),
-    #     default=-1,
-    #     info=dict(
-    #         label='Description',
-    #         description='Optional. Description of the set',
-    #     )
-    # )
-    # """Collection to provide via OAI-PMH."""
-
-    parent_name = db.Column(db.Text(),
-                            ForeignKey('oaiset.spec'),
-                            default=None)
-
-
-    parent = db.relationship(
-        "Set",
-        remote_side=[spec],
-        backref="oaiset",
-        cascade="all, delete-orphan",
-        single_parent=True
+    parent_name = db.Column(
+        db.String(40),
+        ForeignKey('oaiserver_set.spec'),
+        nullable=True,
     )
 
-    def get_full_spec(self):
-        if self.parent:
-            return self.parent.get_full_spec()+":"+self.spec
+    parent = db.relationship(
+        'OAISet',
+        remote_side=[spec],
+        backref=db.backref('children', remote_side=[parent_name]),
+        cascade='all, delete-orphan',
+        single_parent=True,
+    )
+
+    @property
+    def full_spec(self):
+        if self.parent_name:
+            return self.parent.full_spec + ':' + self.spec
         else:
             return self.spec
 
 
-# class SetRecord(db.Model):
-#     """
-#     """
-
-#     __tablename__ = 'oaisetrecord'
-
-#     set_spec = db.Column(
-#         db.Text(),
-#         ForeignKey(Set.spec),
-#         primary_key=True,
-#         info=dict(
-#             label='Set spec'
-#         )
-#     )
-#     recid = db.Column(
-#         db.Integer(),
-#         primary_key=True,
-#         info=dict(
-#             label='Record id'
-#         )
-#     )
-#     is_deleted = db.Column(
-#         db.Boolean(),
-#         default=False,
-#         info=dict(
-#             label="Deleted?",
-#             description="Is record deleted from the set?"
-#         )
-#     )
-#     create_date = db.Column(
-#         db.DateTime(),
-#         default=func.now(),
-#         info=dict(
-#             label='Creation date',
-#             desciption='Date of record being added to the OAI set.'
-#         )
-#     )
-#     last_modified = db.Column(
-#         db.DateTime(),
-#         onupdate=func.utc_timestamp(),
-#         info=dict(
-#             label='Last modified',
-#             desciption='Last modification date.'
-#         )
-#     )
-
-#     set = db.relationship(
-#         "Set",
-#         remote_side=[Set.spec],
-#         backref="records"
-#     )
+__all__ = ('Set', )

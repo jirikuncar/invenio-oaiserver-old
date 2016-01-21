@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015 CERN.
+# Copyright (C) 2015, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -29,32 +29,31 @@ from __future__ import absolute_import, print_function
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.base import BaseProvider
 
+from .models import OAISet
 
-class OaiIdProvider(BaseProvider):
-    """Record identifier provider."""
 
-    pid_type = 'oaiid'
+class OAIIDProvider(BaseProvider):
+    """OAI-PMH identifier provider."""
+
+    pid_type = 'oai'
     """Type of persistent identifier."""
 
-    pid_provider = "oai"
-    """Provider name.
-
-    The provider name is not recorded in the PID since the provider does not
-    provide any additional features besides creation of record ids.
-    """
+    pid_provider = 'invenio_oaiserver'
+    """Provider name."""
 
     default_status = PIDStatus.RESERVED
-    """Record IDs are by default registered immediately."""
+    """OAI IDs are by default registered when object is known."""
 
     @classmethod
     def create(cls, object_type=None, object_uuid=None, **kwargs):
         """Create a new record identifier."""
-        # Request next integer in recid sequence.
-        assert 'pid_value' not in kwargs
-        # TODO: What namespace do we want, how to manage it
-        kwargs['pid_value'] = "oai:NAMESPACE-ID:"+str(object_uuid)
+        assert 'pid_value' in kwargs
+        # Register only existing OAI set.
+        assert OAISet.query.filter_by(spec=kwargs['pid_value']).exists()
+
         kwargs.setdefault('status', cls.default_status)
         if object_type and object_uuid:
             kwargs['status'] = PIDStatus.REGISTERED
-        return super(OaiIdProvider, cls).create(
+
+        return super(OAIIDProvider, cls).create(
             object_type=object_type, object_uuid=object_uuid, **kwargs)

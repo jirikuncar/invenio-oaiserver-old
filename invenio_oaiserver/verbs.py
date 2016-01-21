@@ -1,181 +1,117 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of Flask-OAIServer
-# Copyright (C) 2015 CERN.
+# This file is part of Invenio.
+# Copyright (C) 2015, 2016 CERN.
 #
-# Flask-OAIServer is free software; you can redistribute it and/or
-# modify it under the terms of the Revised BSD License; see LICENSE
-# file for more details.
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 """OAI-PMH verbs."""
 
-from flask import request, render_template, g
-import six
-from datetime import (datetime, timedelta)
-from flask import current_app as app
-from uuid import uuid4
+from __future__ import absolute_import
+
+from marshmallow import Schema, ValidationError, fields, validate, \
+    validates_schema
+
+from .resumption_token import ResumptionToken
 
 
-def _get_all_request_args():
-    tmp_args_dict = {}
-    for key, value in six.iteritems(request.args):
-        tmp_args_dict[key] = value
-    return tmp_args_dict
+class OAISchema(Schema):
+    """Base OAI argument schema."""
+
+    verb = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+    @validates_schema
+    def validate(self, data):
+        """Check range between from_ and until."""
+        if 'verb' in data and data['verb'] != self.__class__.__name__:
+            raise ValidationError(
+                # FIXME encode data
+                'This is not a valid OAI-PMH verb:{0}'.format(data['verb']),
+                field_names=['verb'],
+            )
+
+        if 'from_' in data and 'until' in data and \
+                data['from_'] > data['until']:
+            raise ValidationError('Date from_ must be before until.')
+
+        extra = set(data.keys()) - set(self.fields.keys())
+        if extra:
+            raise ValidationError('You have passed too many arguments.')
 
 
-def _check_args(incoming, required, optional, exlusive):
-    # TODO: include checking for duplicated arguments
-    # TODO: check for more arguments passed
-    g.verb = incoming["verb"]
-    g.error = {}
+class Verbs(object):
+    """List valid verbs and its arguments."""
 
-    def _pop_arg_from_incoming(arg):
-        try:
-            return incoming.pop(arg)
-        except KeyError:
-            pass
-        except:
-            raise
+    class GetRecord(OAISchema):
+        identifier = fields.Str(required=True)
+        metadataPrefix = fields.Str(required=True)
 
-    def _check_missing_required_args():
-        if not set(required).issubset(set(incoming.keys())):
-            missing_arguments = set(required)-set(incoming.keys())
-            g.error["type"] = "badArgument"
-            g.error["message"] = "You are missing required arguments: \
-                                  {0}".format(missing_arguments)
+    class GetMetadata(OAISchema):
+        identifier = fields.Str(required=True)
+        metadataPrefix = fields.Str(required=True)
 
-    def _check_exclusiv_args():
-        if set(exlusive).issubset(set(incoming.keys())):
-            for arg in exlusive:
-                _pop_arg_from_incoming(arg)
-            if len(incoming):
-                g.error["type"] = "badArgument"
-                g.error["message"] = "You have passed too many arguments \
-                                      together with EXLUSIVE argument."
+    class Identify(OAISchema):
+        pass
 
-    _pop_arg_from_incoming("verb")
-    _check_missing_required_args()
-    _check_exclusiv_args()
+    class ListIdentifiers(OAISchema):
+        from_ = fields.DateTime()
+        until = fields.DateTime()
+        metadataPrefix = fields.Str(required=True)
+        identifier = fields.Str()
+
+    class ListMetadataFormats(OAISchema):
+        identifier = fields.Str()
+
+    class ListRecords(OAISchema):
+        from_ = fields.DateTime()
+        until = fields.DateTime()
+        spec = fields.Str(attribute='set')  # NOTE avoid using set for attr.
+        metadataPrefix = fields.Str(required=True)
+
+    class ListSets(OAISchema):
+        pass
 
 
-def identify():
-    required_arg = []
-    optional_arg = []
-    exclusiv_arg = []
-    incoming = _get_all_request_args()
-    _check_args(incoming, required_arg, optional_arg, exclusiv_arg)
-    if g.error:
-        return render_template("error.xml", incoming=incoming)
-    else:
-        return render_template("identify.xml")
+class ResumptionVerbs(Verbs):
+    """List valid verbs when resumtion token is defined."""
+
+    class ListIdentifiers(OAISchema):
+        resumptionToken = ResumptionToken(required=True)
+
+    class ListRecords(OAISchema):
+        resumptionToken = ResumptionToken(required=True)
+
+    class ListSets(OAISchema):
+        resumptionToken = ResumptionToken(required=True)
 
 
-def list_sets():
-    from flask_oaiserver.sets import (get_sets_list, get_sets_count)
-    required_arg = []
-    optional_arg = []
-    exclusiv_arg = ["resumptionToken"]
-    incoming = _get_all_request_args()
-    _check_args(incoming, required_arg, optional_arg, exclusiv_arg)
-    if g.error:
-        return render_template("error.xml", incoming=incoming)
-    else:
-        sets = get_sets_list()
-        resumption_token = {}
-        if len(sets) < get_sets_count():
-            resumption_token["coursor"] = app.config['CFG_SETS_MAX_LENGTH']
-            resumption_token["date"] = datetime.strptime(g.response_date,
-                                                         "%Y-%m-%dT%H:%M:%Sz") \
-                + timedelta(hours=app.config['CFG_RESUMPTION_TOKEN_EXPIRE_TIME'])
-            resumption_token["list_length"] = get_sets_count()
-            # TODO: create a function to make a db entry on creation of the
-            # resumption token
-            resumption_token["token"] = uuid4()
+def make_request_validator(request):
+    """Validate arguments in incomming request."""
+    verb = request.values.get('verb', '', type=str)
+    resumption_token = request.values.get('resumptionToken', None)
 
-        return render_template("list_sets.xml",
-                               incoming=incoming,
-                               sets=sets,
-                               resumption_token=resumption_token)
-
-
-def list_metadata_formats():
-    required_arg = []
-    optional_arg = ["identifier"]
-    exclusiv_arg = []
-    incoming = _get_all_request_args()
-    _check_args(incoming, required_arg, optional_arg, exclusiv_arg)
-    if g.error:
-        return render_template("error.xml", incoming=incoming)
-    else:
-        return render_template("list_metadata_formats.xml",
-                               incoming=incoming,
-                               formats=[{'prefix': 'oai_dc',
-                                         'schema': 'http://www.openarchives.org\
-                                                    /OAI/2.0/oai_dc.xsd',
-                                         'namespace': 'http://www.openarchives.\
-                                                       org/OAI/2.0/oai_dc/'},
-                                        {'prefix': 'marcxml',
-                                         'schema': 'http://purl.org/dc/elements\
-                                                    /1.1/',
-                                         'namespace': 'http://www.openarchives.\
-                                                       org/OAI/1.1/dc.xsd'}
-                                        ])
-
-
-def list_records():
-    required_arg = ["metadataPrefix"]
-    optional_arg = ["from", "until", "set"]
-    exclusiv_arg = ["resumptionToken"]
-    incoming = _get_all_request_args()
-    _check_args(incoming, required_arg, optional_arg, exclusiv_arg)
-    if g.error:
-        return render_template("error.xml", incoming=incoming)
-    else:
-        return render_template("list_records.xml",
-                               incoming=incoming,
-                               records=[{'identifier': 'tmpidentifier1',
-                                         'datestamp': '2015-10-06',
-                                         'sets': ['set1']},
-                                        {'identifier': 'tmpidentifier2',
-                                         'datestamp': '2003-04-01',
-                                         'sets': ['set1', 'set2']},
-                                        {'identifier': 'tmpidentifier3',
-                                         'datestamp': '2014-07-13',
-                                         'sets': ['set3', 'set1']}
-                                        ])
-
-
-def list_identifiers():
-    required_arg = ["metadataPrefix"]
-    optional_arg = ["from", "until", "set"]
-    exclusiv_arg = ["resumptionToken"]
-    incoming = _get_all_request_args()
-    _check_args(incoming, required_arg, optional_arg, exclusiv_arg)
-    if g.error:
-        return render_template("error.xml", incoming=incoming)
-    else:
-        return render_template("list_identifiers.xml",
-                               incoming=incoming,
-                               records=[{'identifier': 'tmpidentifier1',
-                                         'datestamp': '2015-10-06',
-                                         'sets': ['set1']},
-                                        {'identifier': 'tmpidentifier2',
-                                         'datestamp': '2003-04-01',
-                                         'sets': ['set1', 'set2']},
-                                        {'identifier': 'tmpidentifier3',
-                                         'datestamp': '2014-07-13',
-                                         'sets': ['set3', 'set1']}
-                                        ])
-
-
-def get_record():
-    required_arg = ["identifier", "metadataPrefix"]
-    optional_arg = []
-    exclusiv_arg = []
-    incoming = _get_all_request_args()
-    _check_args(incoming, required_arg, optional_arg, exclusiv_arg)
-    if g.error:
-        return render_template("error.xml", incoming=incoming)
-    else:
-        return "This is the requested record with {0} identifier in format \
-                {1}".format(incoming["identifier"], incoming["metadatePrefix"])
+    schema = Verbs if resumption_token is None else ResumptionVerbs
+    validator = getattr(schema, verb, OAISchema)(partial=False)
+    # Force schema validation.
+    validator.validate(request.args)
+    return validator

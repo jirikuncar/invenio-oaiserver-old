@@ -47,7 +47,7 @@ def _check_args(incoming, required, optional, exlusive):
 
     def _check_missing_required_args():
         if not set(required).issubset(set(incoming.keys())):
-            missing_arguments = set(required)-set(incoming.keys())
+            missing_arguments = set(required) - set(incoming.keys())
             g.error["type"] = "badArgument"
             g.error["message"] = "You are missing required arguments: \
                                   {0}".format(missing_arguments)
@@ -73,7 +73,9 @@ def identify():
     incoming = _get_all_request_args()
     _check_args(incoming, required_arg, optional_arg, exclusiv_arg)
     if g.error:
-        return render_template("invenio_oaiserver/server/error.xml", incoming=incoming)
+        return render_template(
+            "invenio_oaiserver/server/error.xml",
+            incoming=incoming)
     else:
         return render_template("identify.xml")
 
@@ -92,9 +94,9 @@ def list_sets():
         resumption_token = {}
         if sets.count() < get_sets_count():
             resumption_token["coursor"] = app.config['CFG_SETS_MAX_LENGTH']
-            resumption_token["date"] = datetime.strptime(g.response_date,
-                                                         "%Y-%m-%dT%H:%M:%Sz") \
-                + timedelta(hours=app.config['CFG_RESUMPTION_TOKEN_EXPIRE_TIME'])
+            resumption_token["date"] = datetime.strptime(
+                g.response_date, "%Y-%m-%dT%H:%M:%Sz") + timedelta(
+                hours=app.config['CFG_RESUMPTION_TOKEN_EXPIRE_TIME'])
             resumption_token["list_length"] = get_sets_count()
             # TODO: create a function to make a db entry on creation of the
             # resumption token
@@ -116,9 +118,10 @@ def list_metadata_formats():
         return render_template("error.xml", incoming=incoming)
     else:
         print app.config['OAISERVER_METADATA_FORMATS']
-        return render_template("list_metadata_formats.xml",
-                               incoming=incoming,
-                               formats=app.config['OAISERVER_METADATA_FORMATS'])
+        return render_template(
+            "list_metadata_formats.xml",
+            incoming=incoming,
+            formats=app.config['OAISERVER_METADATA_FORMATS'])
 
 
 # TODO differentiate with data passed fo list_records and list_identifiers
@@ -135,10 +138,12 @@ def list_records():
     if g.error:
         return render_template("error.xml", incoming=incoming)
     else:
-        return render_template("list_records.xml",
-                               incoming=incoming,
-                               records=get_oai_records(from_date=incoming['from'],
-                                                       until_date=incoming['until']))
+        return render_template(
+            "list_records.xml",
+            incoming=incoming,
+            records=get_oai_records(
+                from_date=incoming['from'],
+                until_date=incoming['until']))
 
 
 def list_identifiers():
@@ -154,10 +159,12 @@ def list_identifiers():
     if g.error:
         return render_template("error.xml", incoming=incoming)
     else:
-        return render_template("list_identifiers.xml",
-                               incoming=incoming,
-                               records=get_oai_records(from_date=incoming['from'],
-                                                       until_date=incoming['until']))
+        return render_template(
+            "list_identifiers.xml",
+            incoming=incoming,
+            records=get_oai_records(
+                from_date=incoming['from'],
+                until_date=incoming['until']))
 
 
 def get_record():

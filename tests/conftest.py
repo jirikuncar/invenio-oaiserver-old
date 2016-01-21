@@ -27,16 +27,43 @@
 
 from __future__ import absolute_import, print_function
 
+import os
+import shutil
+import tempfile
+
 import pytest
 from flask import Flask
+from flask_cli import FlaskCLI
+from invenio_db import InvenioDB, db
+from invenio_records import InvenioRecords
+
+from invenio_oaiserver import InvenioOAIServer
 
 
 @pytest.fixture()
-def app():
+def app(request):
     """Flask application fixture."""
-    app = Flask('testapp')
+    instance_path = tempfile.mkdtemp()
+    app = Flask('testapp', instance_path=instance_path)
     app.config.update(
-        TESTING=True
+        TESTING=True,
+        SECRET_KEY="CHANGE_ME",
+        SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
+                                               'sqlite:///test.db'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=True,
     )
+    FlaskCLI(app)
+    InvenioDB(app)
+    InvenioRecords(app)
     InvenioOAIServer(app)
+
+    with app.app_context():
+        db.create_all()
+
+    def teardown():
+        with app.app_context():
+            db.drop_all()
+        shutil.rmtree(instance_path)
+
+    request.addfinalizer(teardown)
     return app
