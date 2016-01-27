@@ -26,7 +26,6 @@
 
 from flask_babelex import lazy_gettext as _
 from invenio_db import db
-from sqlalchemy import ForeignKey, func
 from sqlalchemy_utils import Timestamp
 
 
@@ -35,9 +34,11 @@ class OAISet(db.Model, Timestamp):
 
     __tablename__ = 'oaiserver_set'
 
+    id = db.Column(db.Integer, primary_key=True)
+
     spec = db.Column(
         db.String(40),
-        primary_key=True,
+        unique=True,
         info=dict(
             label=_('Identifier'),
             description=_('Identifier of the set.'),
@@ -65,8 +66,8 @@ class OAISet(db.Model, Timestamp):
     """Human readable description."""
 
     search_pattern = db.Column(
-        db.Text(),
-        default=u'',
+        db.Text,
+        nullable=True,
         info=dict(
             label=_('Search pattern'),
             description=_('Search pattern to select records'),
@@ -74,26 +75,5 @@ class OAISet(db.Model, Timestamp):
     )
     """Search pattern to get records."""
 
-    parent_name = db.Column(
-        db.String(40),
-        ForeignKey('oaiserver_set.spec'),
-        nullable=True,
-    )
 
-    parent = db.relationship(
-        'OAISet',
-        remote_side=[spec],
-        backref=db.backref('children', remote_side=[parent_name]),
-        cascade='all, delete-orphan',
-        single_parent=True,
-    )
-
-    @property
-    def full_spec(self):
-        if self.parent_name:
-            return self.parent.full_spec + ':' + self.spec
-        else:
-            return self.spec
-
-
-__all__ = ('Set', )
+__all__ = ('OAISet', )

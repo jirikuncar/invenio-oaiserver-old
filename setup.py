@@ -45,14 +45,22 @@ tests_require = [
 ]
 
 extras_require = {
+    ':python_version=="2.7"': [
+        'functools32>=3.2.3',
+    ],
     'docs': [
         'Sphinx>=1.3',
     ],
     'tests': tests_require,
+    'search': [
+        'invenio-search>=1.0.0a2',
+    ]
 }
 
 extras_require['all'] = []
-for reqs in extras_require.values():
+for name, reqs in extras_require.items():
+    if name[0] == ':':
+        continue
     extras_require['all'].extend(reqs)
 
 setup_requires = [
@@ -60,9 +68,15 @@ setup_requires = [
 ]
 
 install_requires = [
+    #  'invenio-assets>=1.0.0a4',
     'Flask-BabelEx>=0.9.2',
+    'invenio-db>=1.0.0a9',
+    'invenio-pidstore>=1.0.0a3',
+    'invenio-query-parser>=0.4.1',
+    'invenio-records>=1.0.0a8',
     'lxml>=3.5.0',
     'marshmallow>=2.5.0',
+    'webargs>=1.2.0',
 ]
 
 packages = find_packages()

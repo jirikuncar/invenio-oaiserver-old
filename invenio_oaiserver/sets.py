@@ -25,14 +25,14 @@
 """Sets helper functions."""
 
 from flask import current_app
-from .models import Set, SetRecord
+from .models import OAISet, SetRecord
 
 
 def get_sets_list(starting_position=0, max_length=None):
     if not max_length:
-        max_length = app.config['OAISERVER_SETS_MAX_LENGTH']
+        max_length = current_app.config['OAISERVER_SETS_MAX_LENGTH']
 
-    sets = Set.query.offset(starting_position)
+    sets = OAISet.query.offset(starting_position)
     if max_length:
         sets.limit(max_length)
     return sets
@@ -42,7 +42,7 @@ def get_sets_list(starting_position=0, max_length=None):
 
 
 def get_sets_count():
-    return Set.query.count()
+    return OAISet.query.count()
 
 
 def get_oai_records(set_spec=None, from_date=None, until_date=None):

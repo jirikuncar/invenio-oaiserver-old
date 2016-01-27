@@ -24,6 +24,10 @@
 
 """Define default configuration values."""
 
+from __future__ import unicode_literals
+
+import pkg_resources
+
 OAISERVER_PAGE_SIZE = 10
 
 # The version of the OAI-PMH supported by the repository.
@@ -48,3 +52,24 @@ OAISERVER_METADATA_FORMATS = {
         'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
     }
 }
+
+OAISERVER_REGISTER_RECORD_SIGNALS = True
+"""Catch record insert/update signals and update the `_oaisets` field."""
+
+OAISERVER_QUERY_PARSER = 'invenio_query_parser.parser:Main'
+
+OAISERVER_QUERY_WALKERS = [
+    'invenio_query_parser.walkers.pypeg_to_ast:PypegConverter',
+]
+
+try:
+    pkg_resources.get_distribution('invenio_search')
+
+    from invenio_search.config import \
+        SEARCH_QUERY_PARSER as OAISERVER_QUERY_PARSER, \
+        SEARCH_QUERY_WALKERS as OAISERVER_QUERY_WALKERS
+except pkg_resources.DistributionNotFound:  # pragma: no cover
+        pass
+
+OAISERVER_CACHE_KEY = 'DynamicOAISets::'
+"""Key prefix added before all keys in cache server."""

@@ -156,7 +156,7 @@ def listsets(**kwargs):
     for oai_set in OAISet.query.all():
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
         e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, 'setSpec'))
-        e_setSpec.text = oai_set.full_spec
+        e_setSpec.text = oai_set.spec
         e_setName = SubElement(e_set, etree.QName(NS_OAIPMH, 'setName'))
         e_setName.text = oai_set.name
         """

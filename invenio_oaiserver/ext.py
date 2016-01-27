@@ -26,26 +26,72 @@
 
 from __future__ import absolute_import, print_function
 
+from invenio_records import signals
+
 from . import config
+
+
+class _AppState(object):
+    """State for Invenio-OAIServer."""
+
+    def __init__(self, app, cache=None):
+        """Initialize state."""
+        self.app = app
+        self.cache = cache
+        if self.app.config['OAISERVER_REGISTER_RECORD_SIGNALS']:
+            self.register_signals()
+
+    @property
+    def sets(self):
+        """Get list of sets."""
+        if self.cache:
+            return self.cache.get(
+                self.app.config['OAISERVER_CACHE_KEY'])
+
+    @sets.setter
+    def sets(self, values):
+        """Set list of sets."""
+        # if cache server is configured, save sets list
+        if self.cache:
+            self.cache.set(self.app.config['OAISERVER_CACHE_KEY'], values)
+
+    def register_signals(self):
+        """Register signals."""
+        from .receivers import OAIServerUpdater
+        # Register Record signals to update record['_oaisets']
+        self.update_function = OAIServerUpdater(app=self.app)
+        signals.before_record_insert.connect(self.update_function,
+                                             weak=False)
+        signals.before_record_update.connect(self.update_function,
+                                             weak=False)
+
+    def unregister_signals(self):
+        """Unregister signals."""
+        # Unregister Record signals
+        if hasattr(self, 'update_function'):
+            signals.before_record_insert.disconnect(self.update_function)
+            signals.before_record_update.disconnect(self.update_function)
 
 
 class InvenioOAIServer(object):
     """Invenio-OAIServer extension."""
 
-    def __init__(self, app=None):
+    def __init__(self, app=None, **kwargs):
         """Extension initialization."""
         if app:
-            self.init_app(app)
+            self.init_app(app, **kwargs)
 
-    def init_app(self, app):
+    def init_app(self, app, **kwargs):
         """Flask application initialization."""
         self.init_config(app)
+
+        state = _AppState(app=app, cache=kwargs.get('cache'))
 
         from .views import server  # , settings
         app.register_blueprint(server.blueprint)
         # app.register_blueprint(settings.blueprint)
 
-        app.extensions['invenio-oaiserver'] = self
+        app.extensions['invenio-oaiserver'] = state
 
     def init_config(self, app):
         """Initialize configuration."""

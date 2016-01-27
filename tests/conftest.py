@@ -49,7 +49,7 @@ def app(request):
         TESTING=True,
         SECRET_KEY="CHANGE_ME",
         SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
-                                               'sqlite:///test.db'),
+                                               'sqlite://'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
     )
     FlaskCLI(app)
