@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015, 2016 CERN.
+# Copyright (C) 2016 CERN.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -22,36 +22,24 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""OAI-PMH ID provider."""
+"""Persistent identifier minters."""
 
 from __future__ import absolute_import, print_function
 
-from invenio_pidstore.models import PIDStatus
-from invenio_pidstore.providers.base import BaseProvider
+from flask import current_app
 
-from .models import OAISet
+from .providers import OAIIDProvider
 
 
-class OAIIDProvider(BaseProvider):
-    """OAI-PMH identifier provider."""
-
-    pid_type = 'oai'
-    """Type of persistent identifier."""
-
-    pid_provider = 'invenio_oaiserver'
-    """Provider name."""
-
-    default_status = PIDStatus.RESERVED
-    """OAI IDs are by default registered when object is known."""
-
-    @classmethod
-    def create(cls, object_type=None, object_uuid=None, **kwargs):
-        """Create a new record identifier."""
-        assert 'pid_value' in kwargs
-
-        kwargs.setdefault('status', cls.default_status)
-        if object_type and object_uuid:
-            kwargs['status'] = PIDStatus.REGISTERED
-
-        return super(OAIIDProvider, cls).create(
-            object_type=object_type, object_uuid=object_uuid, **kwargs)
+def oaiid_minter(record_uuid, data):
+    """Mint record identifiers."""
+    assert 'control_number' in data
+    # TODO shall we mint the control number if it is not set?
+    pid_value = current_app.config.get('OAISERVER_ID_PREFIX', '') + str(
+        data['control_number'])
+    provider = OAIIDProvider.create(
+        object_type='rec', object_uuid=record_uuid,
+        pid_value=pid_value
+    )
+    data['_oaiid'] = provider.pid.pid_value
+    return provider.pid
