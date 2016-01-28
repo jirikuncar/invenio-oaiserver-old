@@ -35,6 +35,8 @@ Run example development server:
 
 from __future__ import absolute_import, print_function
 
+import os
+
 from flask import Flask
 from flask_cli import FlaskCLI
 from invenio_assets import InvenioAssets
@@ -45,6 +47,11 @@ from invenio_oaiserver import InvenioOAIServer
 
 # Create Flask application
 app = Flask(__name__)
+app.config.update(
+    SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                      'sqlite:///app.db'),
+    SERVER_NAME="app",
+)
 FlaskCLI(app)
 InvenioAssets(app)
 InvenioDB(app)
@@ -63,5 +70,5 @@ def oaiserver():
     from invenio_db import db
     from invenio_oaiserver.models import OAISet
 
-    db.session.add(OAISet(spec='test', name='Test'))
+    db.session.add(OAISet(spec='test', name='Test', description="test desc"))
     db.session.commit()
