@@ -51,6 +51,7 @@ def app(request):
         SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
                                                'sqlite://'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        SERVER_NAME="app",
     )
     FlaskCLI(app)
     InvenioDB(app)

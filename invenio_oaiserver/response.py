@@ -39,6 +39,12 @@ NSMAP = {
     None: NS_OAIPMH,
 }
 
+NSMAP_DESCRIPTION = {
+    'oai_dc': NS_OAIDC,
+    'dc': NS_DC,
+    'xsi': NS_XSI,
+}
+
 
 def datetime_to_datestamp(dt, day_granularity=False):
     assert dt.tzinfo is None  # only accept timezone naive datetimes
@@ -59,7 +65,7 @@ def envelope(**kwargs):
 
     e_oaipmh.addprevious(etree.ProcessingInstruction(
         'xml-stylesheet', 'type="text/xsl" href="{0}"'.format(url_for(
-            '.static', filename='xsl/oai2.v1.0.xsl'))))
+            'static', filename='xsl/oai2.v1.0.xsl'))))
 
     e_responseDate = SubElement(
         e_oaipmh, etree.QName(
@@ -151,6 +157,8 @@ def listsets(**kwargs):
     """Create OAI-PMH response for ListSets verb."""
     from .models import OAISet
 
+    kwargs['verb'] = 'ListSets'
+
     e_tree, e_listsets = verb(**kwargs)
 
     for oai_set in OAISet.query.all():
@@ -159,20 +167,17 @@ def listsets(**kwargs):
         e_setSpec.text = oai_set.spec
         e_setName = SubElement(e_set, etree.QName(NS_OAIPMH, 'setName'))
         e_setName.text = oai_set.name
-        """
-        <setDescription>
-        <oai_dc:dc
-            xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
-            xmlns:dc="http://purl.org/dc/elements/1.1/"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/
-            http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
-            <dc:description>
-            {{ oai_set.description }}
-            </dc:description>
-        </oai_dc:dc>
-        </setDescription>
-        """
+        if oai_set.description:
+            e_setDescription = SubElement(e_set, etree.QName(NS_OAIPMH,
+                                                             'setDescription'))
+            e_dc = SubElement(
+                e_setDescription, etree.QName(NS_OAIDC, 'dc'),
+                nsmap=NSMAP_DESCRIPTION
+            )
+            e_dc.set(etree.QName(NS_XSI, 'schemaLocation'), NS_OAIDC)
+            e_description = SubElement(e_dc, etree.QName(NS_DC, 'description'))
+            e_description.text = oai_set.description
+
     return e_tree
 
 

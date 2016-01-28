@@ -26,10 +26,13 @@
 
 from __future__ import absolute_import
 
-import re
-from datetime import datetime, timedelta
+import os
 
 from lxml import etree
+
+from invenio_db import db
+from invenio_oaiserver.models import OAISet
+from invenio_oaiserver.response import listsets
 
 
 def _xpath_errors(body):
@@ -77,6 +80,23 @@ def test_list_sets(app):
 def test_list_sets_long(app):
     with app.test_client() as c:
         result = c.get('/oai2d?verb=ListSets')
+
+
+def test_listsets(app, monkeypatch):
+    """Test ListSets."""
+    path = os.path.dirname(__file__)
+    with open("{0}/demo_listsets.xml".format(path)) as myfile:
+        expect = myfile.read().replace('\n', '')
+
+    monkeypatch.setattr('invenio_oaiserver.response.datetime_to_datestamp',
+                        lambda x: "2016-01-28T12:45:48Z")
+
+    with app.test_request_context():
+        with db.session.begin_nested():
+            a = OAISet(spec='test', name='Test', description="test desc")
+            db.session.add(a)
+
+        assert expect == etree.tostring(listsets())
 
 
 def test_list_sets_with_resumption_token(app):
