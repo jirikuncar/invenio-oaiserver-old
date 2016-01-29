@@ -28,9 +28,9 @@ from __future__ import absolute_import
 
 import os
 
+from invenio_db import db
 from lxml import etree
 
-from invenio_db import db
 from invenio_oaiserver.models import OAISet
 from invenio_oaiserver.response import listsets
 
@@ -96,7 +96,7 @@ def test_listsets(app, monkeypatch):
             a = OAISet(spec='test', name='Test', description="test desc")
             db.session.add(a)
 
-        assert expect == etree.tostring(listsets())
+        assert expect == etree.tostring(listsets()).decode('utf-8')
 
 
 def test_list_sets_with_resumption_token(app):

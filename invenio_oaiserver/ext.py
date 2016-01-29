@@ -110,8 +110,9 @@ class InvenioOAIServer(object):
             import socket
             import warnings
 
-            app.config.setdefault('OAISERVER_ID_PREFIX',
-                           'oai://{0}/recid/'.format(socket.gethostname()))
+            app.config.setdefault(
+                'OAISERVER_ID_PREFIX',
+                'oai://{0}/recid/'.format(socket.gethostname()))
             warnings.warn(
                 """Please specify the OAISERVER_ID_PREFIX configuration."""
                 """default value is: {0}""".format(

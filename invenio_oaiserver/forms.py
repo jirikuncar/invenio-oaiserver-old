@@ -40,6 +40,7 @@ class OAISetForm(ModelForm):
 
     @classmethod
     def get_session(self):
+        """Get session."""
         return db.session
 
     class Meta:

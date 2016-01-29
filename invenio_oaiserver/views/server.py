@@ -26,7 +26,7 @@
 
 from __future__ import absolute_import
 
-from flask import Blueprint, current_app, request, make_response
+from flask import Blueprint, make_response
 from lxml import etree
 from marshmallow.exceptions import ValidationError
 from webargs.flaskparser import use_args
@@ -77,6 +77,7 @@ def validation_error(exception):
 @blueprint.route('/oai2d', methods=['GET', 'POST'])
 @use_args(make_request_validator)
 def response(args):
+    """Response."""
     e_tree = getattr(xml, args['verb'].lower())(**args)
     response = make_response(etree.tostring(
         e_tree,

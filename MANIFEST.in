@@ -51,6 +51,8 @@ recursive-include examples *.py
 recursive-include invenio_oaiserver *.html
 recursive-include invenio_oaiserver *.py
 recursive-include tests *.py
+recursive-include invenio_oaiserver *.xsl
+recursive-include tests *.xml
 
 # added by check_manifest.py
 recursive-include invenio_oaiserver *.py

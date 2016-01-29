@@ -24,10 +24,11 @@
 
 """OAI-PMH 2.0 response generator."""
 
+from datetime import MINYEAR, datetime
+
 from flask import current_app, url_for
-from lxml.etree import ElementTree, Element, SubElement
 from lxml import etree
-from datetime import datetime, MINYEAR
+from lxml.etree import Element, ElementTree, SubElement
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -47,6 +48,7 @@ NSMAP_DESCRIPTION = {
 
 
 def datetime_to_datestamp(dt, day_granularity=False):
+    """Transform datetime to datestamp."""
     assert dt.tzinfo is None  # only accept timezone naive datetimes
     # ignore microseconds
     dt = dt.replace(microsecond=0)
@@ -223,11 +225,7 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
-    from invenio_db import db
     from invenio_records.models import RecordMetadata
-    from werkzeug.utils import import_string
-
-    cfg = current_app.config
 
     e_tree, e_getrecord = verb(**kwargs)
 
@@ -238,22 +236,12 @@ def getrecord(**kwargs):
         datestamp=record.updated,
     )
 
-    serializer = import_string(
-        cfg['OAISERVER_METADATA_FORMATS'][kwargs['metadataPrefix']]
-        ['serializer']
-    )
-
-    e_metadata = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'metadata'))
-    # e_metadata.append(etree.XML(serializer([record.json])))
-
     return e_tree
 
 
 def listidentifiers(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
-    from invenio_db import db
     from invenio_records.models import RecordMetadata
-    cfg = current_app.config
 
     e_tree, e_listidentifiers = verb(**kwargs)
 
@@ -269,15 +257,7 @@ def listidentifiers(**kwargs):
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
-    from invenio_db import db
     from invenio_records.models import RecordMetadata
-    from werkzeug.utils import import_string
-    cfg = current_app.config
-
-    serializer = import_string(
-        cfg['OAISERVER_METADATA_FORMATS'][kwargs['metadataPrefix']]
-        ['serializer']
-    )
 
     e_tree, e_listrecords = verb(**kwargs)
 
@@ -289,7 +269,5 @@ def listrecords(**kwargs):
             identifier=str(record.id),
             datestamp=record.updated,
         )
-        e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
-        # e_metadata.append(serializer(record.json))
 
     return e_tree

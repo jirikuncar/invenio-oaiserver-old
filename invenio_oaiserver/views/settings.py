@@ -1,11 +1,26 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of Flask-OAIServer
-# Copyright (C) 2015 CERN.
+# This file is part of Invenio.
+# Copyright (C) 2016 CERN.
 #
-# Flask-OAIServer is free software; you can redistribute it and/or
-# modify it under the terms of the Revised BSD License; see LICENSE
-# file for more details.
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 """OAI-PMH 2.0 server."""
 
@@ -17,8 +32,6 @@ from flask import (Blueprint,
                    redirect,
                    url_for)
 from invenio_oaiserver.models import OAISet
-from wtforms import Form, fields, validators, ValidationError
-from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from invenio_db import db
 
 from invenio_search import Query, current_search_client
@@ -36,13 +49,14 @@ blueprint = Blueprint(
 
 @blueprint.route('/')
 def index():
+    """Index."""
     return render_template('invenio_oaiserver/settings/index.html')
 
 
 @blueprint.route('/sets')
 def manage_sets():
     """Manage sets."""
-    sets = OAISet.query.filter(Set.parent is None)
+    sets = OAISet.query.filter()
     return render_template('sets.html', sets=sets)
 
 
@@ -55,7 +69,7 @@ def new_set():
 @blueprint.route('/sets/edit/<spec>')
 def edit_set(spec):
     """Manage sets."""
-    set_to_edit = OAISet.query.filter(Set.spec == spec).one()
+    set_to_edit = OAISet.query.filter(OAISet.spec == spec).one()
     return render_template('edit_set.html',
                            edit_set_form=get_NewSetForm(obj=set_to_edit))
 
@@ -65,11 +79,11 @@ def submit_set():
     """Insert a new set."""
     form = get_NewSetForm(request.form)
     if request.method == 'POST' and form.validate():
-        new_set = Set(spec=form.spec.data,
-                      name=form.name.data,
-                      description=form.description.data,
-                      search_pattern=form.search_pattern.data,
-                      parent=form.parent.data)
+        new_set = OAISet(spec=form.spec.data,
+                         name=form.name.data,
+                         description=form.description.data,
+                         search_pattern=form.search_pattern.data,
+                         parent=form.parent.data)
         db.session.add(new_set)
 
         # this shoul be moved to UPDATER (celery task) and it sould always
@@ -122,6 +136,7 @@ def submit_edit_set(spec):
 
 
 def add_records_to_set(ids):
+    """Add records to set."""
     # use invenio-record functions to add set information to the record
     # get record via invenio-record.api.Record.... get_record
     for recid, oaiid in ids:
@@ -148,7 +163,7 @@ def add_records_to_set(ids):
 def delete_set(spec):
     """Manage sets."""
     # SetRecord.query.filter(SetRecord.set_spec==spec).delete()
-    OAISet.query.filter(Set.spec == spec).delete()
+    OAISet.query.filter(OAISet.spec == spec).delete()
     db.session.commit()
     flash('Set %s was deleted.' % spec)
     return redirect(url_for('.manage_sets'))

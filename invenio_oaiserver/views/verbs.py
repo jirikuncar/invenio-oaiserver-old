@@ -67,6 +67,7 @@ def _check_args(incoming, required, optional, exlusive):
 
 
 def identify():
+    """Identify."""
     required_arg = []
     optional_arg = []
     exclusiv_arg = []
@@ -81,6 +82,7 @@ def identify():
 
 
 def list_sets():
+    """List sets."""
     from invenio_oaiserver.sets import (get_sets_list, get_sets_count)
     required_arg = []
     optional_arg = []
@@ -109,6 +111,7 @@ def list_sets():
 
 
 def list_metadata_formats():
+    """List metadata formats."""
     required_arg = []
     optional_arg = ["identifier"]
     exclusiv_arg = []
@@ -126,6 +129,7 @@ def list_metadata_formats():
 
 # TODO differentiate with data passed fo list_records and list_identifiers
 def list_records():
+    """List records."""
     required_arg = ["metadataPrefix"]
     optional_arg = ["from", "until", "set"]
     exclusiv_arg = ["resumptionToken"]
@@ -147,6 +151,7 @@ def list_records():
 
 
 def list_identifiers():
+    """List identifiers."""
     required_arg = ["metadataPrefix"]
     optional_arg = ["from", "until", "set"]
     exclusiv_arg = ["resumptionToken"]
@@ -168,6 +173,7 @@ def list_identifiers():
 
 
 def get_record():
+    """Get record."""
     required_arg = ["identifier", "metadataPrefix"]
     optional_arg = []
     exclusiv_arg = []
