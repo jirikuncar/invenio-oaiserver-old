@@ -47,7 +47,13 @@ OAISERVER_SETS_MAX_LENGTH = 3
 
 OAISERVER_METADATA_FORMATS = {
     'oai_dc': {
-        'serializer': 'dojson.contrib.to_marc21.utils:dumps',
+        'serializer': (
+            'dojson.contrib.to_marc21.utils:dumps_etree',
+            {
+                'xslt_filename': pkg_resources.resource_filename(
+                    'invenio_oaiserver', 'static/xsl/oai2.v1.0.xsl')
+            }
+        ),
         'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
         'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
     }

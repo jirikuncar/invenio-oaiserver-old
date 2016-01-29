@@ -27,8 +27,13 @@
 from datetime import MINYEAR, datetime
 
 from flask import current_app, url_for
+from invenio_db import db
+from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
+
+from .models import OAISet
+from .utils import etree_dumper
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -102,8 +107,6 @@ def verb(**kwargs):
 
 def identify(**kwargs):
     """Create OAI-PMH response for verb Identify."""
-    from invenio_db import db
-    from invenio_records.models import RecordMetadata
     cfg = current_app.config
 
     e_tree, e_identify = verb(**kwargs)
@@ -157,8 +160,6 @@ def identify(**kwargs):
 
 def listsets(**kwargs):
     """Create OAI-PMH response for ListSets verb."""
-    from .models import OAISet
-
     kwargs['verb'] = 'ListSets'
 
     e_tree, e_listsets = verb(**kwargs)
@@ -225,8 +226,6 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
-    from invenio_records.models import RecordMetadata
-
     e_tree, e_getrecord = verb(**kwargs)
 
     record = RecordMetadata.query.get(kwargs['identifier'])
@@ -241,8 +240,6 @@ def getrecord(**kwargs):
 
 def listidentifiers(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
-    from invenio_records.models import RecordMetadata
-
     e_tree, e_listidentifiers = verb(**kwargs)
 
     for record in RecordMetadata.query.limit(10).all():
@@ -257,7 +254,9 @@ def listidentifiers(**kwargs):
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
-    from invenio_records.models import RecordMetadata
+    kwargs['verb'] = 'ListRecords'
+
+    record_dumper = etree_dumper(**kwargs)
 
     e_tree, e_listrecords = verb(**kwargs)
 
@@ -269,5 +268,11 @@ def listrecords(**kwargs):
             identifier=str(record.id),
             datestamp=record.updated,
         )
+        e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
+        # FIXME replace this line
+        e_metadata.append(record_dumper(record.json).getroot())
+        # with
+        #  e_metadata.append(record_dumper(record.json))
+        # waiting https://github.com/inveniosoftware/dojson/pull/70
 
     return e_tree

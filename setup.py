@@ -74,6 +74,7 @@ install_requires = [
     'invenio-pidstore>=1.0.0a3',
     'invenio-query-parser>=0.4.1',
     'invenio-records>=1.0.0a8',
+    'dojson>=1.0.1',
     'lxml>=3.5.0',
     'marshmallow>=2.5.0',
     'webargs>=1.2.0',

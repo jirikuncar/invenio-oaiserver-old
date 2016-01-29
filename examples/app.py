@@ -69,6 +69,18 @@ def oaiserver():
     """Initialize OAI-PMH server."""
     from invenio_db import db
     from invenio_oaiserver.models import OAISet
+    from invenio_records.api import Record
 
     db.session.add(OAISet(spec='test', name='Test', description="test desc"))
+    db.session.commit()
+
+    schema = {
+        'type': 'object',
+        'properties': {
+            'title': {'type': 'string'},
+            'field': {'type': 'boolean'},
+        },
+        'required': ['title'],
+    }
+    Record.create({'title': 'Test0', '$schema': schema})
     db.session.commit()

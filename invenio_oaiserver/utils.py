@@ -26,6 +26,8 @@
 
 from __future__ import absolute_import, print_function
 
+from functools import partial
+
 import six
 from flask import current_app
 from werkzeug.utils import import_string
@@ -46,3 +48,12 @@ def query_walkers():
         else walker() for walker in current_app.config[
             'OAISERVER_QUERY_WALKERS']
     ]
+
+
+def etree_dumper(metadataPrefix, **kwargs):
+    """Return etree_dumper instances."""
+    etree_dumper = current_app.config[
+        'OAISERVER_METADATA_FORMATS'][metadataPrefix]['serializer']
+    if isinstance(etree_dumper, tuple):
+        return partial(import_string(etree_dumper[0]), **etree_dumper[1])
+    return import_string(etree_dumper)

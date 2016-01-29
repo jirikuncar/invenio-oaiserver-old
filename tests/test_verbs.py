@@ -26,13 +26,7 @@
 
 from __future__ import absolute_import
 
-import os
-
-from invenio_db import db
 from lxml import etree
-
-from invenio_oaiserver.models import OAISet
-from invenio_oaiserver.response import NS_DC, NS_OAIDC, NS_OAIPMH, listsets
 
 
 def _xpath_errors(body):
@@ -80,50 +74,6 @@ def test_list_sets(app):
 def test_list_sets_long(app):
     with app.test_client() as c:
         result = c.get('/oai2d?verb=ListSets')
-
-
-def test_listsets(app, monkeypatch):
-    """Test ListSets."""
-    monkeypatch.setattr('invenio_oaiserver.response.datetime_to_datestamp',
-                        lambda x: "2016-01-28T12:45:48Z")
-
-    with app.test_request_context():
-        with db.session.begin_nested():
-            a = OAISet(spec='test', name='Test', description="test desc")
-            db.session.add(a)
-
-        tree = listsets()
-
-        namespaces = {'x': NS_OAIPMH}
-        assert len(tree.xpath('/x:OAI-PMH', namespaces=namespaces)) == 1
-
-        assert len(tree.xpath('/x:OAI-PMH/x:ListSets',
-                              namespaces=namespaces)) == 1
-        assert len(tree.xpath('/x:OAI-PMH/x:ListSets/x:set',
-                              namespaces=namespaces)) == 1
-        assert len(tree.xpath('/x:OAI-PMH/x:ListSets/x:set/x:setSpec',
-                              namespaces=namespaces)) == 1
-        assert len(tree.xpath('/x:OAI-PMH/x:ListSets/x:set/x:setName',
-                              namespaces=namespaces)) == 1
-        assert len(tree.xpath(
-            '/x:OAI-PMH/x:ListSets/x:set/x:setDescription',
-            namespaces=namespaces
-        )) == 1
-        namespaces['y'] = NS_OAIDC
-        assert len(
-            tree.xpath('/x:OAI-PMH/x:ListSets/x:set/x:setDescription/y:dc',
-                       namespaces=namespaces)
-        ) == 1
-        namespaces['z'] = NS_DC
-        assert len(
-            tree.xpath('/x:OAI-PMH/x:ListSets/x:set/x:setDescription/y:dc/'
-                       'z:description', namespaces=namespaces)
-        ) == 1
-        text = tree.xpath(
-            '/x:OAI-PMH/x:ListSets/x:set/x:setDescription/y:dc/'
-            'z:description/text()', namespaces=namespaces)
-        assert len(text) == 1
-        assert text[0] == 'test desc'
 
 
 def test_list_sets_with_resumption_token(app):
