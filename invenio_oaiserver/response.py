@@ -160,8 +160,6 @@ def identify(**kwargs):
 
 def listsets(**kwargs):
     """Create OAI-PMH response for ListSets verb."""
-    kwargs['verb'] = 'ListSets'
-
     e_tree, e_listsets = verb(**kwargs)
 
     for oai_set in OAISet.query.all():
@@ -254,8 +252,6 @@ def listidentifiers(**kwargs):
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
-    kwargs['verb'] = 'ListRecords'
-
     record_dumper = etree_dumper(**kwargs)
 
     e_tree, e_listrecords = verb(**kwargs)
