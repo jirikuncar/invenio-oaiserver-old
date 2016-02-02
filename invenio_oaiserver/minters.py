@@ -28,7 +28,7 @@ from __future__ import absolute_import, print_function
 
 from flask import current_app
 
-from .providers import OAIIDProvider
+from .provider import OAIIDProvider
 
 
 def oaiid_minter(record_uuid, data):
