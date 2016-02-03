@@ -32,6 +32,7 @@ from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 
+from .provider import OAIIDProvider
 from .models import OAISet
 from .utils import etree_dumper
 
@@ -224,14 +225,18 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
+    record_dumper = etree_dumper(**kwargs)
     e_tree, e_getrecord = verb(**kwargs)
 
-    record = RecordMetadata.query.get(kwargs['identifier'])
+    pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
+    record = RecordMetadata.query.get(pid.object_uuid)
     header(
         e_getrecord,
-        identifier=str(record.id),
+        identifier=str(pid.object_uuid),
         datestamp=record.updated,
     )
+    e_metadata = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'metadata'))
+    e_metadata.append(record_dumper(record.json))
 
     return e_tree
 
@@ -265,10 +270,6 @@ def listrecords(**kwargs):
             datestamp=record.updated,
         )
         e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
-        # FIXME replace this line
-        e_metadata.append(record_dumper(record.json).getroot())
-        # with
-        #  e_metadata.append(record_dumper(record.json))
-        # waiting https://github.com/inveniosoftware/dojson/pull/70
+        e_metadata.append(record_dumper(record.json))
 
     return e_tree

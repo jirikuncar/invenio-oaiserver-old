@@ -29,8 +29,6 @@ from __future__ import absolute_import, print_function
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.base import BaseProvider
 
-from .models import OAISet
-
 
 class OAIIDProvider(BaseProvider):
     """OAI-PMH identifier provider."""
