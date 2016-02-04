@@ -72,7 +72,7 @@ def validation_error(exception):
 
     return (etree.tostring(xml.error(extract_errors())),
             422,
-            {'Content-Type': 'application/xml'})
+            {'Content-Type': 'text/xml'})
 
 
 @blueprint.errorhandler(PIDDoesNotExistError)
@@ -81,7 +81,7 @@ def pid_error(exception):
     return (etree.tostring(xml.error([('idDoesNotExist',
                                        'No matching identifier')])),
             422,
-            {'Content-Type': 'application/xml'})
+            {'Content-Type': 'text/xml'})
 
 
 @blueprint.route('/oai2d', methods=['GET', 'POST'])
@@ -96,5 +96,5 @@ def response(args):
         xml_declaration=True,
         encoding='UTF-8',
     ))
-    response.headers['Content-Type'] = 'application/xml'
+    response.headers['Content-Type'] = 'text/xml'
     return response
