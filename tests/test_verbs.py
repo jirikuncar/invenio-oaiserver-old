@@ -260,6 +260,53 @@ def test_listrecords(app):
                               namespaces=namespaces)) == 1
 
 
+def test_listidentifiers(app):
+    """Test verb ListIdentifiers."""
+    schema = {
+        'type': 'object',
+        'properties': {
+            'title': {'type': 'string'},
+            'field': {'type': 'boolean'},
+        },
+        'required': ['title'],
+    }
+    with app.test_request_context():
+        with db.session.begin_nested():
+            record_id = uuid.uuid4()
+            data = {'title': 'Test0', '$schema': schema}
+            recid_minter(record_id, data)
+            pid = oaiid_minter(record_id, data)
+            Record.create(data, id_=record_id)
+            pid_value = pid.pid_value
+            pid_updated = pid.updated
+
+        with app.test_client() as c:
+            result = c.get(
+                "/oai2d?verb=ListIdentifiers&metadataPrefix=oai_dc"
+            )
+
+        tree = etree.fromstring(result.data)
+
+        namespaces = {'x': NS_OAIPMH}
+        assert len(tree.xpath('/x:OAI-PMH', namespaces=namespaces)) == 1
+        assert len(tree.xpath('/x:OAI-PMH/x:ListIdentifiers',
+                              namespaces=namespaces)) == 1
+        assert len(tree.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header',
+                              namespaces=namespaces)) == 1
+        identifier = tree.xpath(
+            '/x:OAI-PMH/x:ListIdentifiers/x:header/x:identifier',
+            namespaces=namespaces
+        )
+        assert len(identifier) == 1
+        assert identifier[0].text == str(pid_value)
+        datestamp = tree.xpath(
+            '/x:OAI-PMH/x:ListIdentifiers/x:header/x:datestamp',
+            namespaces=namespaces
+        )
+        assert len(datestamp) == 1
+        assert datestamp[0].text == datetime_to_datestamp(pid_updated)
+
+
 def test_list_sets_long(app):
     with app.test_client() as c:
         result = c.get('/oai2d?verb=ListSets')
