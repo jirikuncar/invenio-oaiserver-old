@@ -44,6 +44,8 @@ class OAISetForm(ModelForm):
         return db.session
 
     class Meta:
+        """Form configuration."""
+
         model = OAISet
 
     parent = QuerySelectField(

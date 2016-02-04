@@ -38,6 +38,8 @@ class OAISchema(Schema):
     verb = fields.Str(required=True)
 
     class Meta:
+        """Schema configuration."""
+
         strict = True
 
     @validates_schema
@@ -63,45 +65,61 @@ class Verbs(object):
     """List valid verbs and its arguments."""
 
     class GetRecord(OAISchema):
+        """Arguments for GetRecord verb."""
+
         identifier = fields.Str(required=True)
         metadataPrefix = fields.Str(required=True)
 
     class GetMetadata(OAISchema):
+        """Arguments for GetMetadata verb."""
+
         identifier = fields.Str(required=True)
         metadataPrefix = fields.Str(required=True)
 
     class Identify(OAISchema):
-        pass
+        """Arguments for Identify verb."""
 
     class ListIdentifiers(OAISchema):
+        """Arguments for ListIdentifiers verb."""
+
         from_ = fields.DateTime()
         until = fields.DateTime()
         metadataPrefix = fields.Str(required=True)
         identifier = fields.Str()
 
     class ListMetadataFormats(OAISchema):
+        """Arguments for ListMetadataFormats verb."""
+
         identifier = fields.Str()
 
     class ListRecords(OAISchema):
+        """Arguments for ListRecords verb."""
+
         from_ = fields.DateTime()
         until = fields.DateTime()
         spec = fields.Str(attribute='set')  # NOTE avoid using set for attr.
         metadataPrefix = fields.Str(required=True)
 
     class ListSets(OAISchema):
-        pass
+        """Arguments for ListSets verb."""
 
 
 class ResumptionVerbs(Verbs):
     """List valid verbs when resumtion token is defined."""
 
     class ListIdentifiers(OAISchema):
+        """Arguments for ListIdentifiers verb."""
+
         resumptionToken = ResumptionToken(required=True)
 
     class ListRecords(OAISchema):
+        """Arguments for ListRecords verb."""
+
         resumptionToken = ResumptionToken(required=True)
 
     class ListSets(OAISchema):
+        """Arguments for ListSets verb."""
+
         resumptionToken = ResumptionToken(required=True)
 
 

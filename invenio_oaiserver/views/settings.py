@@ -25,18 +25,13 @@
 """OAI-PMH 2.0 server."""
 
 from __future__ import absolute_import
-from flask import (Blueprint,
-                   render_template,
-                   request,
-                   flash,
-                   redirect,
-                   url_for)
-from invenio_oaiserver.models import OAISet
+
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from invenio_db import db
-
 from invenio_search import Query, current_search_client
-from invenio_oaiserver.provider import OAIIDProvider
 
+from invenio_oaiserver.models import OAISet
+from invenio_oaiserver.provider import OAIIDProvider
 
 blueprint = Blueprint(
     'oaiserver_settings',

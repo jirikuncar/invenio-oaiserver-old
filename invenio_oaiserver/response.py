@@ -32,9 +32,9 @@ from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 
-from .provider import OAIIDProvider
 from .models import OAISet
-from .utils import etree_dumper
+from .provider import OAIIDProvider
+from .utils import serializer
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -225,7 +225,7 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
-    record_dumper = etree_dumper(**kwargs)
+    record_dumper = serializer(kwargs['metadataPrefix'])
     e_tree, e_getrecord = verb(**kwargs)
 
     pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
@@ -257,7 +257,7 @@ def listidentifiers(**kwargs):
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
-    record_dumper = etree_dumper(**kwargs)
+    record_dumper = serializer(kwargs['metadataPrefix'])
 
     e_tree, e_listrecords = verb(**kwargs)
 

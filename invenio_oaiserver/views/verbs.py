@@ -9,11 +9,13 @@
 
 """OAI-PMH verbs."""
 
-from flask import request, render_template, g
-import six
-from datetime import (datetime, timedelta)
-from flask import current_app as app
+from datetime import datetime, timedelta
 from uuid import uuid4
+
+import six
+from flask import current_app as app
+from flask import g, render_template, request
+
 from invenio_oaiserver.sets import get_oai_records
 
 

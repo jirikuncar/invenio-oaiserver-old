@@ -34,7 +34,6 @@ from webargs.flaskparser import use_args
 from .. import response as xml
 from ..verbs import make_request_validator
 
-
 blueprint = Blueprint(
     'invenio_oaiserver',
     __name__,

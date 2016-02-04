@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015 CERN.
+# Copyright (C) 2015, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -32,6 +32,11 @@ import six
 from flask import current_app
 from werkzeug.utils import import_string
 
+try:
+    from functools import lru_cache
+except ImportError:  # pragma: no cover
+    from functools32 import lru_cache
+
 
 def parser():
     """Return search query parser."""
@@ -50,10 +55,11 @@ def query_walkers():
     ]
 
 
-def etree_dumper(metadataPrefix, **kwargs):
+@lru_cache(maxsize=100)
+def serializer(metadata_prefix):
     """Return etree_dumper instances."""
-    etree_dumper = current_app.config[
-        'OAISERVER_METADATA_FORMATS'][metadataPrefix]['serializer']
-    if isinstance(etree_dumper, tuple):
-        return partial(import_string(etree_dumper[0]), **etree_dumper[1])
-    return import_string(etree_dumper)
+    serializer_ = current_app.config['OAISERVER_METADATA_FORMATS'][
+        metadata_prefix]['serializer']
+    if isinstance(serializer_, tuple):
+        return partial(import_string(serializer_[0]), **serializer_[1])
+    return import_string(serializer_)
