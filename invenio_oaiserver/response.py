@@ -31,6 +31,7 @@ from invenio_db import db
 from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
+from invenio_pidstore.errors import PersistentIdentifierError
 
 from .fetchers import oaiid_fetcher
 from .models import OAISet
@@ -249,12 +250,16 @@ def listidentifiers(**kwargs):
     e_tree, e_listidentifiers = verb(**kwargs)
 
     for record in RecordMetadata.query.limit(10).all():
-        pid = oaiid_fetcher(record.id, record.json)
-        header(
-            e_listidentifiers,
-            identifier=pid.pid_value,
-            datestamp=record.updated,
-        )
+        try:
+            pid = oaiid_fetcher(record.id, record.json)
+            header(
+                e_listidentifiers,
+                identifier=pid.pid_value,
+                datestamp=record.updated,
+            )
+        except PersistentIdentifierError:
+            # exclude from output
+            pass
 
     return e_tree
 
