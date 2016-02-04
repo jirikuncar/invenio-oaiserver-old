@@ -27,12 +27,15 @@
 from __future__ import absolute_import, print_function
 
 from invenio_pidstore.fetchers import FetchedPID
+from invenio_pidstore.errors import PersistentIdentifierError
 
 from .provider import OAIIDProvider
 
 
 def oaiid_fetcher(record_uuid, data):
     """Fetch a record's identifier."""
+    if '_oaiid' not in data:
+        raise PersistentIdentifierError()
     return FetchedPID(
         provider=OAIIDProvider,
         pid_type=OAIIDProvider.pid_type,
