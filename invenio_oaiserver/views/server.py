@@ -27,12 +27,14 @@
 from __future__ import absolute_import
 
 from flask import Blueprint, make_response
+from invenio_pidstore.errors import PIDDoesNotExistError
 from lxml import etree
 from marshmallow.exceptions import ValidationError
 from webargs.flaskparser import use_args
 
 from .. import response as xml
 from ..verbs import make_request_validator
+
 
 blueprint = Blueprint(
     'invenio_oaiserver',
@@ -77,7 +79,13 @@ def validation_error(exception):
 @use_args(make_request_validator)
 def response(args):
     """Response."""
-    e_tree = getattr(xml, args['verb'].lower())(**args)
+    try:
+        e_tree = getattr(xml, args['verb'].lower())(**args)
+    except PIDDoesNotExistError:
+        e_tree = xml.error([
+            ('idDoesNotExist', 'No matching identifier')
+        ])
+
     response = make_response(etree.tostring(
         e_tree,
         pretty_print=True,

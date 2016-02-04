@@ -67,6 +67,40 @@ def test_identify(app):
         result = c.get('/oai2d?verb=Identify')
         assert 200 == result.status_code
 
+        tree = etree.fromstring(result.data)
+
+        namespaces = {'x': NS_OAIPMH}
+        assert len(tree.xpath('/x:OAI-PMH', namespaces=namespaces)) == 1
+        assert len(tree.xpath('/x:OAI-PMH/x:Identify',
+                              namespaces=namespaces)) == 1
+        repository_name = tree.xpath('/x:OAI-PMH/x:Identify/x:repositoryName',
+                                     namespaces=namespaces)
+        assert len(repository_name) == 1
+        assert repository_name[0].text == 'Invenio-OAIServer'
+        base_url = tree.xpath('/x:OAI-PMH/x:Identify/x:baseURL',
+                              namespaces=namespaces)
+        assert len(base_url) == 1
+        assert base_url[0].text == 'http://app/oai2d'
+        protocolVersion = tree.xpath('/x:OAI-PMH/x:Identify/x:protocolVersion',
+                                     namespaces=namespaces)
+        assert len(protocolVersion) == 1
+        assert protocolVersion[0].text == '2.0'
+        adminEmail = tree.xpath('/x:OAI-PMH/x:Identify/x:adminEmail',
+                                namespaces=namespaces)
+        assert len(adminEmail) == 1
+        assert adminEmail[0].text == 'info@invenio-software.org'
+        earliestDatestamp = tree.xpath(
+            '/x:OAI-PMH/x:Identify/x:earliestDatestamp',
+            namespaces=namespaces)
+        assert len(earliestDatestamp) == 1
+        deletedRecord = tree.xpath('/x:OAI-PMH/x:Identify/x:deletedRecord',
+                                   namespaces=namespaces)
+        assert len(deletedRecord) == 1
+        assert deletedRecord[0].text == 'no'
+        granularity = tree.xpath('/x:OAI-PMH/x:Identify/x:granularity',
+                                 namespaces=namespaces)
+        assert len(granularity) == 1
+
 
 def test_getrecord(app):
     schema = {
