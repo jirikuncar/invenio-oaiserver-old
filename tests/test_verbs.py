@@ -116,6 +116,24 @@ def test_getrecord(app):
                                   namespaces=namespaces)) == 1
 
 
+def test_getrecord_fail(app):
+    """Test GetRecord if record doesn't exist."""
+    with app.test_request_context():
+        with app.test_client() as c:
+            result = c.get(
+                "/oai2d?verb=GetRecord&identifier={0}&metadataPrefix=oai_dc"
+                .format('not-exist-pid'))
+            assert 200 == result.status_code
+
+            tree = etree.fromstring(result.data)
+
+            namespaces = {'x': NS_OAIPMH}
+            assert len(tree.xpath('/x:OAI-PMH', namespaces=namespaces)) == 1
+            error = tree.xpath('/x:OAI-PMH/x:error', namespaces=namespaces)
+            assert len(error) == 1
+            assert error[0].attrib['code'] == "idDoesNotExist"
+
+
 def test_identify_with_additional_args(app):
     with app.test_client() as c:
         result = c.get('/oai2d?verb=Identify&notAValidArg=True')

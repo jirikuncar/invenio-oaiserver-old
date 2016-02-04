@@ -28,6 +28,7 @@ from datetime import MINYEAR, datetime
 
 from flask import current_app, url_for
 from invenio_db import db
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
@@ -227,17 +228,24 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
     record_dumper = serializer(kwargs['metadataPrefix'])
-    e_tree, e_getrecord = verb(**kwargs)
+    try:
+        pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
+        record = RecordMetadata.query.get(pid.object_uuid)
 
-    pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
-    record = RecordMetadata.query.get(pid.object_uuid)
-    header(
-        e_getrecord,
-        identifier=str(pid.object_uuid),
-        datestamp=record.updated,
-    )
-    e_metadata = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'metadata'))
-    e_metadata.append(record_dumper(record.json))
+        e_tree, e_getrecord = verb(**kwargs)
+
+        header(
+            e_getrecord,
+            identifier=str(pid.object_uuid),
+            datestamp=record.updated,
+        )
+        e_metadata = SubElement(e_getrecord,
+                                etree.QName(NS_OAIPMH, 'metadata'))
+        e_metadata.append(record_dumper(record.json))
+    except PIDDoesNotExistError:
+        e_tree = error([
+            ('idDoesNotExist', 'No matching identifier')
+        ])
 
     return e_tree
 
