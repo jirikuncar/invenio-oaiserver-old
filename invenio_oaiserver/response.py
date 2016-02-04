@@ -32,6 +32,7 @@ from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 
+from .fetchers import oaiid_fetcher
 from .models import OAISet
 from .provider import OAIIDProvider
 from .utils import serializer
@@ -246,9 +247,10 @@ def listidentifiers(**kwargs):
     e_tree, e_listidentifiers = verb(**kwargs)
 
     for record in RecordMetadata.query.limit(10).all():
+        pid = oaiid_fetcher(record.id, record.json)
         header(
             e_listidentifiers,
-            identifier=str(record.id),
+            identifier=pid.pid_value,
             datestamp=record.updated,
         )
 
@@ -262,11 +264,12 @@ def listrecords(**kwargs):
     e_tree, e_listrecords = verb(**kwargs)
 
     for record in RecordMetadata.query.limit(10).all():
+        pid = oaiid_fetcher(record.id, record.json)
         e_record = SubElement(e_listrecords,
                               etree.QName(NS_OAIPMH, 'record'))
         header(
             e_record,
-            identifier=str(record.id),
+            identifier=pid.pid_value,
             datestamp=record.updated,
         )
         e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))

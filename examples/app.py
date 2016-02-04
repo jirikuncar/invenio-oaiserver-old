@@ -51,14 +51,18 @@ Mint the records:
 from __future__ import absolute_import, print_function
 
 import os
+import uuid
 
+import click
 from flask import Flask
 from flask_cli import FlaskCLI
 from invenio_assets import InvenioAssets
 from invenio_db import InvenioDB
+from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.minters import recid_minter
 from invenio_records import InvenioRecords
 from invenio_records.models import RecordMetadata
+from invenio_search import InvenioSearch
 from sqlalchemy.orm.attributes import flag_modified
 
 from invenio_oaiserver import InvenioOAIServer
@@ -67,14 +71,16 @@ from invenio_oaiserver.minters import oaiid_minter
 # Create Flask application
 app = Flask(__name__)
 app.config.update(
+    OAISERVER_ID_PREFIX='oai:localhost:recid/',
     SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                       'sqlite:///app.db'),
-    SERVER_NAME="app",
 )
 FlaskCLI(app)
 InvenioAssets(app)
 InvenioDB(app)
 InvenioRecords(app)
+InvenioPIDStore(app)
+# InvenioSearch(app)
 InvenioOAIServer(app)
 
 
@@ -84,16 +90,22 @@ def fixtures():
 
 
 @fixtures.command()
-def oaiserver():
+@click.option('-n', 'number', type=click.INT, default=27)
+def oaiserver(number):
     """Initialize OAI-PMH server."""
     from invenio_db import db
     from invenio_oaiserver.models import OAISet
     from invenio_records.api import Record
 
     # create a OAI Set
-    db.session.add(OAISet(spec='test', name='Test', description="test desc",
-                          search_pattern="title:Test0"))
-    db.session.commit()
+    with db.session.begin_nested():
+        for i in range(number):
+            db.session.add(OAISet(
+                spec='test{0}'.format(i),
+                name='Test{0}'.format(i),
+                description='test desc {0}'.format(i),
+                search_pattern='title:Test{0}'.format(i),
+            ))
 
     # create a record
     schema = {
@@ -104,14 +116,13 @@ def oaiserver():
         },
         'required': ['title'],
     }
-    Record.create({'title': 'Test0', '$schema': schema})
-    db.session.commit()
 
-    # mint all records
-    records = RecordMetadata.query.all()
-    for record in records:
-        recid_minter(record.id, record.json)
-        oaiid_minter(record.id, record.json)
-        flag_modified(record.model, 'json')
+    with db.session.begin_nested():
+        for i in range(number):
+            record_id = uuid.uuid4()
+            data = {'title': 'Test{0}'.format(i), '$schema': schema}
+            recid_minter(record_id, data)
+            oaiid_minter(record_id, data)
+            Record.create(data, id_=record_id)
 
     db.session.commit()
