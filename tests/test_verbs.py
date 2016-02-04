@@ -26,6 +26,8 @@
 
 from __future__ import absolute_import
 
+import uuid
+
 from invenio_db import db
 from invenio_pidstore.minters import recid_minter
 from invenio_records.api import Record
@@ -178,7 +180,11 @@ def test_listrecords(app):
     }
     with app.test_request_context():
         with db.session.begin_nested():
-            Record.create({'title': 'Test0', '$schema': schema})
+            record_id = uuid.uuid4()
+            data = {'title': 'Test0', '$schema': schema}
+            recid_minter(record_id, data)
+            oaiid_minter(record_id, data)
+            Record.create(data, id_=record_id)
 
         with app.test_client() as c:
             result = c.get('/oai2d?verb=ListRecords&metadataPrefix=oai_dc')

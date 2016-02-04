@@ -28,6 +28,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import pkg_resources
 import shutil
 import tempfile
 
@@ -38,6 +39,12 @@ from invenio_db import InvenioDB, db
 from invenio_records import InvenioRecords
 
 from invenio_oaiserver import InvenioOAIServer
+
+
+def dump_etree(record, **kwargs):
+    """Test dumper."""
+    from dojson.contrib.to_marc21.utils import dumps_etree
+    return dumps_etree({'245__': {'a': record['title']}}, **kwargs)
 
 
 @pytest.fixture()
@@ -52,6 +59,19 @@ def app(request):
                                                'sqlite://'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SERVER_NAME="app",
+        OAISERVER_METADATA_FORMATS={
+            'oai_dc': {
+                'serializer': (
+                    'conftest:dump_etree',
+                    {
+                        'xslt_filename': pkg_resources.resource_filename(
+                            'invenio_oaiserver', 'static/xsl/oai2.v1.0.xsl')
+                    }
+                ),
+                'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
+                'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+            }
+        },
     )
     FlaskCLI(app)
     InvenioDB(app)

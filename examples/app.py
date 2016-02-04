@@ -63,7 +63,6 @@ from invenio_pidstore.minters import recid_minter
 from invenio_records import InvenioRecords
 from invenio_records.models import RecordMetadata
 from invenio_search import InvenioSearch
-from sqlalchemy.orm.attributes import flag_modified
 
 from invenio_oaiserver import InvenioOAIServer
 from invenio_oaiserver.minters import oaiid_minter
