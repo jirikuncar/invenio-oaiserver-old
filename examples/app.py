@@ -66,7 +66,6 @@ from invenio_search import InvenioSearch
 
 from invenio_oaiserver import InvenioOAIServer
 from invenio_oaiserver.minters import oaiid_minter
-from invenio_oaiserver.views.server import blueprint
 
 # Create Flask application
 app = Flask(__name__)
@@ -82,8 +81,6 @@ InvenioRecords(app)
 InvenioPIDStore(app)
 # InvenioSearch(app)
 InvenioOAIServer(app)
-
-app.register_blueprint(blueprint)
 
 
 @app.cli.group()

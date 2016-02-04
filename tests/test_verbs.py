@@ -157,7 +157,7 @@ def test_getrecord_fail(app):
             result = c.get(
                 "/oai2d?verb=GetRecord&identifier={0}&metadataPrefix=oai_dc"
                 .format('not-exist-pid'))
-            assert 200 == result.status_code
+            assert 422 == result.status_code
 
             tree = etree.fromstring(result.data)
 

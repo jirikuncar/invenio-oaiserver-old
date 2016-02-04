@@ -75,16 +75,20 @@ def validation_error(exception):
             {'Content-Type': 'application/xml'})
 
 
+@blueprint.errorhandler(PIDDoesNotExistError)
+def pid_error(exception):
+    """Handle PID Exceptions."""
+    return (etree.tostring(xml.error([('idDoesNotExist',
+                                       'No matching identifier')])),
+            422,
+            {'Content-Type': 'application/xml'})
+
+
 @blueprint.route('/oai2d', methods=['GET', 'POST'])
 @use_args(make_request_validator)
 def response(args):
     """Response."""
-    try:
-        e_tree = getattr(xml, args['verb'].lower())(**args)
-    except PIDDoesNotExistError:
-        e_tree = xml.error([
-            ('idDoesNotExist', 'No matching identifier')
-        ])
+    e_tree = getattr(xml, args['verb'].lower())(**args)
 
     response = make_response(etree.tostring(
         e_tree,
