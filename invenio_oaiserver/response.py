@@ -85,6 +85,8 @@ def envelope(**kwargs):
     for key, value in kwargs.items():
         if key == 'from' or key == 'until':
             value = datetime_to_datestamp(value)
+        elif key == 'resumptionToken':
+            value = value['token']
         e_request.set(key, value)
     e_request.text = url_for('invenio_oaiserver.response', _external=True)
     return e_tree, e_oaipmh
@@ -164,7 +166,13 @@ def listsets(**kwargs):
     """Create OAI-PMH response for ListSets verb."""
     e_tree, e_listsets = verb(**kwargs)
 
-    for oai_set in OAISet.query.all():
+    page = kwargs.get('resumptionToken', {}).get('page', 1)
+    oai_sets = OAISet.query.paginate(page=page, per_page=10, error_out=False)
+
+    from .resumption_token import serialize
+    token = serialize(has_next=oai_sets.has_next, **kwargs)
+
+    for oai_set in oai_sets.items:
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
         e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, 'setSpec'))
         e_setSpec.text = oai_set.spec
@@ -180,6 +188,11 @@ def listsets(**kwargs):
             e_dc.set(etree.QName(NS_XSI, 'schemaLocation'), NS_OAIDC)
             e_description = SubElement(e_dc, etree.QName(NS_DC, 'description'))
             e_description.text = oai_set.description
+
+    e_resumptionToken = SubElement(e_listsets, etree.QName(NS_OAIPMH,
+                                                           'resumptionToken'))
+    if token:
+        e_resumptionToken.text = token
 
     return e_tree
 

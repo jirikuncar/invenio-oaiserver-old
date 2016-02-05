@@ -28,6 +28,7 @@ from __future__ import absolute_import
 
 from flask import Blueprint, make_response
 from invenio_pidstore.errors import PIDDoesNotExistError
+from itsdangerous import BadSignature
 from lxml import etree
 from marshmallow.exceptions import ValidationError
 from webargs.flaskparser import use_args
@@ -82,6 +83,15 @@ def pid_error(exception):
                                        'No matching identifier')])),
             422,
             {'Content-Type': 'text/xml'})
+
+
+@blueprint.errorhandler(BadSignature)
+def pid_error(exception):
+    """Handle resumption token exceptions."""
+    return (etree.tostring(xml.error([(
+        'badResumptionToken',
+        'The value of the resumptionToken argument is invalid or expired.')
+    ])), 422, {'Content-Type': 'text/xml'})
 
 
 @blueprint.route('/oai2d', methods=['GET', 'POST'])

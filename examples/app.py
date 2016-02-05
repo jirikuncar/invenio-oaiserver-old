@@ -71,6 +71,7 @@ from invenio_oaiserver.minters import oaiid_minter
 app = Flask(__name__)
 app.config.update(
     OAISERVER_ID_PREFIX='oai:localhost:recid/',
+    SECRET_KEY='CHANGE_ME',
     SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                       'sqlite:///app.db'),
 )
