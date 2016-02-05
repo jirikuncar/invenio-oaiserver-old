@@ -20,19 +20,18 @@
 """Query parser."""
 
 import pypeg2
+from flask import current_app
 from invenio_query_parser.walkers.match_unit import MatchUnit
-
+from invenio_search import Query as SearchQuery, current_search_client
+from invenio_records.models import RecordMetadata
+from werkzeug.utils import cached_property
 from .utils import parser, query_walkers
 
 
-class Query(object):
+class Query(SearchQuery):
     """Query object."""
 
-    def __init__(self, query):
-        """Init."""
-        self._query = query
-
-    @property
+    @cached_property
     def query(self):
         """Parse query string using given grammar."""
         tree = pypeg2.parse(self._query, parser(), whitespace="")
@@ -43,3 +42,27 @@ class Query(object):
     def match(self, record):
         """Return True if record match the query."""
         return self.query.accept(MatchUnit(record))
+
+
+def get_records(page=1):
+    """Get records."""
+    size = current_app.config['OAISERVER_PAGE_SIZE']
+    query = Query()[(page-1)*size:page*size]
+
+    response = current_search_client.search(
+        index=current_app.config['OAISERVER_RECORD_INDEX'],
+        body=query.body,
+        version=True,
+    )
+
+    for result in response['hits']['hits']:
+        yield {
+            # FIXME
+            "id": result['_id'],
+            "json": result['_source'],
+            # FIXME retrieve from elastic search
+            "updated": RecordMetadata.query.filter_by(
+                id=result['_id']).one().updated
+        }
+
+    raise StopIteration

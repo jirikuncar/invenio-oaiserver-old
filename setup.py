@@ -52,9 +52,6 @@ extras_require = {
         'Sphinx>=1.3',
     ],
     'tests': tests_require,
-    'search': [
-        'invenio-search>=1.0.0a2',
-    ]
 }
 
 extras_require['all'] = []
@@ -74,6 +71,7 @@ install_requires = [
     'invenio-db>=1.0.0a9',
     'invenio-pidstore>=1.0.0a3',
     'invenio-query-parser>=0.4.1',
+    'invenio-search>=1.0.0a2',
     'invenio-records>=1.0.0a8',
     'dojson>=1.0.1',
     'lxml>=3.5.0',

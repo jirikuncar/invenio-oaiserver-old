@@ -35,6 +35,7 @@ from lxml.etree import Element, ElementTree, SubElement
 from .fetchers import oaiid_fetcher
 from .models import OAISet
 from .provider import OAIIDProvider
+from .query import get_records
 from .utils import serializer
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
@@ -265,7 +266,7 @@ def listidentifiers(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
     e_tree, e_listidentifiers = verb(**kwargs)
 
-    for record in RecordMetadata.query.limit(10).all():
+    for record in get_records():
         pid = oaiid_fetcher(record.id, record.json)
         header(
             e_listidentifiers,
@@ -282,7 +283,7 @@ def listrecords(**kwargs):
 
     e_tree, e_listrecords = verb(**kwargs)
 
-    for record in RecordMetadata.query.limit(10).all():
+    for record in get_records():
         pid = oaiid_fetcher(record.id, record.json)
         e_record = SubElement(e_listrecords,
                               etree.QName(NS_OAIPMH, 'record'))
@@ -295,3 +296,4 @@ def listrecords(**kwargs):
         e_metadata.append(record_dumper(record.json))
 
     return e_tree
+

@@ -30,6 +30,8 @@ import pkg_resources
 
 OAISERVER_PAGE_SIZE = 10
 
+OAISERVER_RECORD_INDEX = 'records'
+
 # The version of the OAI-PMH supported by the repository.
 OAISERVER_PROTOCOL_VERSION = '2.0'
 

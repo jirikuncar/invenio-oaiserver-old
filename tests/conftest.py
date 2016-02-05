@@ -37,6 +37,7 @@ from flask import Flask
 from flask_cli import FlaskCLI
 from invenio_db import InvenioDB, db
 from invenio_records import InvenioRecords
+from invenio_search import InvenioSearch
 
 from invenio_oaiserver import InvenioOAIServer
 
@@ -76,6 +77,7 @@ def app(request):
     FlaskCLI(app)
     InvenioDB(app)
     InvenioRecords(app)
+    InvenioSearch(app)
     InvenioOAIServer(app)
 
     with app.app_context():
