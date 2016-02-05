@@ -26,8 +26,8 @@
 
 from __future__ import absolute_import, print_function
 
-from invenio_pidstore.fetchers import FetchedPID
 from invenio_pidstore.errors import PersistentIdentifierError
+from invenio_pidstore.fetchers import FetchedPID
 
 from .provider import OAIIDProvider
 

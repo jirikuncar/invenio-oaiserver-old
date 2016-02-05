@@ -27,6 +27,7 @@
 from __future__ import absolute_import
 
 import uuid
+from copy import deepcopy
 
 from invenio_db import db
 from invenio_pidstore.minters import recid_minter
@@ -176,7 +177,50 @@ def test_identify_with_additional_args(app):
             tree)[0].text
 
 
-def test_list_sets(app):
+def test_listmetadataformats(app):
+    """Test ListMetadataFormats."""
+    with app.test_request_context():
+        with app.test_client() as c:
+            result = c.get('/oai2d?verb=ListMetadataFormats')
+
+        tree = etree.fromstring(result.data)
+
+        namespaces = {'x': NS_OAIPMH}
+        assert len(tree.xpath('/x:OAI-PMH', namespaces=namespaces)) == 1
+        assert len(tree.xpath('/x:OAI-PMH/x:ListMetadataFormats',
+                              namespaces=namespaces)) == 1
+        metadataFormats = tree.xpath(
+            '/x:OAI-PMH/x:ListMetadataFormats/x:metadataFormat',
+            namespaces=namespaces)
+        cfg_metadataFormats = deepcopy(
+            app.config.get('OAISERVER_METADATA_FORMATS', {}))
+        assert len(metadataFormats) == len(cfg_metadataFormats)
+        for metadataFormat in metadataFormats:
+            # prefix
+            prefix = metadataFormat.xpath(
+                '/x:OAI-PMH/x:ListMetadataFormats/x:metadataFormat/'
+                'x:metadataPrefix', namespaces=namespaces)
+            assert len(prefix) == 1
+            assert prefix[0].text in cfg_metadataFormats
+            # schema
+            schema = metadataFormat.xpath(
+                '/x:OAI-PMH/x:ListMetadataFormats/x:metadataFormat/'
+                'x:schema', namespaces=namespaces)
+            assert len(schema) == 1
+            assert schema[0].text in cfg_metadataFormats[
+                prefix[0].text]['schema']
+            # metadataNamespace
+            metadataNamespace = metadataFormat.xpath(
+                '/x:OAI-PMH/x:ListMetadataFormats/x:metadataFormat/'
+                'x:metadataNamespace', namespaces=namespaces)
+            assert len(metadataNamespace) == 1
+            assert metadataNamespace[0].text in cfg_metadataFormats[
+                prefix[0].text]['namespace']
+            # remove tested format
+            del cfg_metadataFormats[prefix[0].text]
+
+
+def test_listsets(app):
     """Test ListSets."""
     with app.test_request_context():
         with db.session.begin_nested():
