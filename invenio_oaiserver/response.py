@@ -296,4 +296,3 @@ def listrecords(**kwargs):
         e_metadata.append(record_dumper(record.json))
 
     return e_tree
-

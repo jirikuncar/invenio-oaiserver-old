@@ -64,5 +64,3 @@ def get_records(page=1):
             "updated": RecordMetadata.query.filter_by(
                 id=result['_id']).one().updated
         }
-
-    raise StopIteration
