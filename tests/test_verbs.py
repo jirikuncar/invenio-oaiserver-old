@@ -162,11 +162,16 @@ def test_getrecord_fail(app):
 
             tree = etree.fromstring(result.data)
 
-            namespaces = {'x': NS_OAIPMH}
-            assert len(tree.xpath('/x:OAI-PMH', namespaces=namespaces)) == 1
-            error = tree.xpath('/x:OAI-PMH/x:error', namespaces=namespaces)
-            assert len(error) == 1
-            assert error[0].attrib['code'] == "idDoesNotExist"
+            _check_xml_idDoesNotExist(tree)
+
+
+def _check_xml_idDoesNotExist(tree):
+    """Text xml for a error idDoesNotExist."""
+    namespaces = {'x': NS_OAIPMH}
+    assert len(tree.xpath('/x:OAI-PMH', namespaces=namespaces)) == 1
+    error = tree.xpath('/x:OAI-PMH/x:error', namespaces=namespaces)
+    assert len(error) == 1
+    assert error[0].attrib['code'] == "idDoesNotExist"
 
 
 def test_identify_with_additional_args(app):
@@ -179,9 +184,54 @@ def test_identify_with_additional_args(app):
 
 def test_listmetadataformats(app):
     """Test ListMetadataFormats."""
+    _listmetadataformats(app=app, query='/oai2d?verb=ListMetadataFormats')
+
+
+def test_listmetadataformats_record(app):
+    """Test ListMetadataFormats for a record."""
+    schema = {
+        'type': 'object',
+        'properties': {
+            'title': {'type': 'string'},
+            'field': {'type': 'boolean'},
+        },
+        'required': ['title'],
+    }
+    with app.test_request_context():
+        with db.session.begin_nested():
+            record_id = uuid.uuid4()
+            data = {'title': 'Test0', '$schema': schema}
+            recid_minter(record_id, data)
+            pid = oaiid_minter(record_id, data)
+            Record.create(data, id_=record_id)
+            pid_value = pid.pid_value
+
+        db.session.commit()
+
+    _listmetadataformats(
+        app=app,
+        query='/oai2d?verb=ListMetadataFormats&identifier={0}'.format(
+            pid_value))
+
+
+def test_listmetadataformats_record_fail(app):
+    """Test ListMetadataFormats for a record that doesn't exist."""
+    query = '/oai2d?verb=ListMetadataFormats&identifier={0}'.format(
+            "pid-not-exixts")
     with app.test_request_context():
         with app.test_client() as c:
-            result = c.get('/oai2d?verb=ListMetadataFormats')
+            result = c.get(query)
+
+        tree = etree.fromstring(result.data)
+
+        _check_xml_idDoesNotExist(tree)
+
+
+def _listmetadataformats(app, query):
+    """Try ListMetadataFormats."""
+    with app.test_request_context():
+        with app.test_client() as c:
+            result = c.get(query)
 
         tree = etree.fromstring(result.data)
 

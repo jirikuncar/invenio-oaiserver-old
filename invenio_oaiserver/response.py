@@ -202,6 +202,10 @@ def listmetadataformats(**kwargs):
     cfg = current_app.config
     e_tree, e_listmetadataformats = verb(**kwargs)
 
+    if 'identifier' in kwargs:
+        # test if record exists
+        OAIIDProvider.get(pid_value=kwargs['identifier'])
+
     for prefix, metadata in cfg.get('OAISERVER_METADATA_FORMATS', {}).items():
         e_metadataformat = SubElement(
             e_listmetadataformats, etree.QName(NS_OAIPMH, 'metadataFormat')
