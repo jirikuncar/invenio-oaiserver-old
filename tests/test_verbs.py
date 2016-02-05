@@ -162,16 +162,16 @@ def test_getrecord_fail(app):
 
             tree = etree.fromstring(result.data)
 
-            _check_xml_idDoesNotExist(tree)
+            _check_xml_error(tree, code='idDoesNotExist')
 
 
-def _check_xml_idDoesNotExist(tree):
+def _check_xml_error(tree, code):
     """Text xml for a error idDoesNotExist."""
     namespaces = {'x': NS_OAIPMH}
     assert len(tree.xpath('/x:OAI-PMH', namespaces=namespaces)) == 1
     error = tree.xpath('/x:OAI-PMH/x:error', namespaces=namespaces)
     assert len(error) == 1
-    assert error[0].attrib['code'] == "idDoesNotExist"
+    assert error[0].attrib['code'] == code
 
 
 def test_identify_with_additional_args(app):
@@ -224,7 +224,7 @@ def test_listmetadataformats_record_fail(app):
 
         tree = etree.fromstring(result.data)
 
-        _check_xml_idDoesNotExist(tree)
+        _check_xml_error(tree, code='idDoesNotExist')
 
 
 def _listmetadataformats(app, query):
@@ -312,6 +312,18 @@ def test_listsets(app):
             'z:description/text()', namespaces=namespaces)
         assert len(text) == 1
         assert text[0] == 'test desc'
+
+
+def test_listrecords_fail_missing_metadataPrefix(app):
+    """Test ListRecords fail missing metadataPrefix."""
+    query = '/oai2d?verb=ListRecords'
+    with app.test_request_context():
+        with app.test_client() as c:
+            result = c.get(query)
+
+        tree = etree.fromstring(result.data)
+
+        _check_xml_error(tree, code='badArgument')
 
 
 def test_listrecords(app):
