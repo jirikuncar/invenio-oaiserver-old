@@ -117,10 +117,11 @@ def test_getrecord(app):
             record = Record.create({'title': 'Test0', '$schema': schema}).model
             recid_minter(record.id, record.json)
             pid = oaiid_minter(record.id, record.json)
-            pid_value = pid.pid_value
-            pid_updated = pid.updated
 
         db.session.commit()
+
+        pid_value = pid.pid_value
+        pid_updated = pid.updated
 
         with app.test_client() as c:
             result = c.get(
@@ -314,9 +315,43 @@ def test_listsets(app):
         assert text[0] == 'test desc'
 
 
+def test_fail_missing_metadataPrefix(app):
+    """Test ListRecords fail missing metadataPrefix."""
+    queries = [
+        '/oai2d?verb=ListRecords',
+        '/oai2d?verb=GetRecord&identifier=123',
+        '/oai2d?verb=ListIdentifiers'
+    ]
+    for query in queries:
+        with app.test_request_context():
+            with app.test_client() as c:
+                result = c.get(query)
+
+            tree = etree.fromstring(result.data)
+
+            _check_xml_error(tree, code='badArgument')
+
+
+def test_fail_not_exist_metadataPrefix(app):
+    """Test ListRecords fail not exist metadataPrefix."""
+    queries = [
+        '/oai2d?verb=ListRecords&metadataPrefix=not-exist',
+        '/oai2d?verb=GetRecord&identifier=123&metadataPrefix=not-exist',
+        '/oai2d?verb=ListIdentifiers&metadataPrefix=not-exist'
+    ]
+    for query in queries:
+        with app.test_request_context():
+            with app.test_client() as c:
+                result = c.get(query)
+
+            tree = etree.fromstring(result.data)
+
+            _check_xml_error(tree, code='badArgument')
+
+
 def test_listrecords_fail_missing_metadataPrefix(app):
     """Test ListRecords fail missing metadataPrefix."""
-    query = '/oai2d?verb=ListRecords'
+    query = '/oai2d?verb=ListRecords&'
     with app.test_request_context():
         with app.test_client() as c:
             result = c.get(query)
@@ -383,8 +418,11 @@ def test_listidentifiers(app):
             recid_minter(record_id, data)
             pid = oaiid_minter(record_id, data)
             Record.create(data, id_=record_id)
-            pid_value = pid.pid_value
-            pid_updated = pid.updated
+
+        db.session.commit()
+
+        pid_value = pid.pid_value
+        pid_updated = pid.updated
 
         with app.test_client() as c:
             result = c.get(

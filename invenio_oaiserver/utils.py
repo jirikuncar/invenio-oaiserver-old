@@ -58,8 +58,8 @@ def query_walkers():
 @lru_cache(maxsize=100)
 def serializer(metadata_prefix):
     """Return etree_dumper instances."""
-    serializer_ = current_app.config['OAISERVER_METADATA_FORMATS'][
-        metadata_prefix]['serializer']
+    metadataFormats = current_app.config['OAISERVER_METADATA_FORMATS']
+    serializer_ = metadataFormats[metadata_prefix]['serializer']
     if isinstance(serializer_, tuple):
         return partial(import_string(serializer_[0]), **serializer_[1])
     return import_string(serializer_)

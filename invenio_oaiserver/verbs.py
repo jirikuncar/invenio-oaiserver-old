@@ -26,10 +26,20 @@
 
 from __future__ import absolute_import
 
-from marshmallow import Schema, ValidationError, fields, validate, \
+from flask import current_app
+
+from marshmallow import Schema, ValidationError, fields, \
     validates_schema
 
 from .resumption_token import ResumptionToken
+
+
+def validate_metadata_prefix(value):
+    """Check metadataPrefix."""
+    metadataFormats = current_app.config['OAISERVER_METADATA_FORMATS']
+    if value not in metadataFormats:
+        raise ValidationError('metadataPrefix does not exist',
+                              field_names=['metadataPrefix'])
 
 
 class OAISchema(Schema):
@@ -68,13 +78,15 @@ class Verbs(object):
         """Arguments for GetRecord verb."""
 
         identifier = fields.Str(required=True)
-        metadataPrefix = fields.Str(required=True)
+        metadataPrefix = fields.Str(required=True,
+                                    validate=validate_metadata_prefix)
 
     class GetMetadata(OAISchema):
         """Arguments for GetMetadata verb."""
 
         identifier = fields.Str(required=True)
-        metadataPrefix = fields.Str(required=True)
+        metadataPrefix = fields.Str(required=True,
+                                    validate=validate_metadata_prefix)
 
     class Identify(OAISchema):
         """Arguments for Identify verb."""
@@ -84,7 +96,8 @@ class Verbs(object):
 
         from_ = fields.DateTime()
         until = fields.DateTime()
-        metadataPrefix = fields.Str(required=True)
+        metadataPrefix = fields.Str(required=True,
+                                    validate=validate_metadata_prefix)
         identifier = fields.Str()
 
     class ListMetadataFormats(OAISchema):
@@ -98,7 +111,8 @@ class Verbs(object):
         from_ = fields.DateTime()
         until = fields.DateTime()
         spec = fields.Str(attribute='set')  # NOTE avoid using set for attr.
-        metadataPrefix = fields.Str(required=True)
+        metadataPrefix = fields.Str(required=True,
+                                    validate=validate_metadata_prefix)
 
     class ListSets(OAISchema):
         """Arguments for ListSets verb."""
