@@ -34,7 +34,8 @@ def serialize(has_next=True, **kwargs):
     if not has_next:
         return
 
-    page = 1
+    # TODO completeListSize and cursor
+    page = 2  # first build token for next page
 
     if 'resumptionToken' in kwargs:
         page = kwargs['resumptionToken']['page'] + 1
